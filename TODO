@@ -1,0 +1,18 @@
+
+	Make the codebase more general for other types of books/literature
+	than just the King James Bible and ilk.
+
+	If we set a handler for `/' then there doesn't seem to be a
+	r->path_info set.  I think it's in r->uri or some other similar
+	field we have to then check.  I wonder if there's a way to get the
+	location of the handler in which we've been installed in ...
+
+	Related to the one above---we don't know (or rather, I don't know at
+	this time) how to determine (well, not without a lot of hassle) what
+	the top level directory is that we're handling.
+
+	How to remove the HTML formatting from the source code to an
+	external file.
+
+	More immediate:  better <META> tags.
+
