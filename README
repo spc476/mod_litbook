@@ -36,12 +36,15 @@ functionality.
 Why is the King James Bible missing from your distribution?
 -----------------------------------------------------------
 
-  Because I didn't feel right in redistributing the copy I downloaded from
-Project Gutenberg.  Also, the final format used for mod_litbook is fairly
-tied to the architecture of the system currently serving it up (technically,
-a 32-bit little-endian byte addressible system using ASCII).  Oh, that, and
-that it would probably add an additional five megs to the distribution and
-that's something I didn't want to add.
+  For several reasons, one being that the text of the King James Bible will
+probably change less often than this software, so why include 1.5Mbytes that
+don't change along with 30k that probably changes quite often?  Doesnt' make
+sense to me.
+
+  Another reason is the way I store the text for easy retrieval---it's
+inherently system dependant; it's probably way too UNIXesque in using the
+filesystem as a database repository as well as storing location information
+in the native integer format in disk files.
 
   I do, however, include the program I used to create the datafiles used by
 mod_litbook, although it's specific to the Project Gutenberg distribution of
@@ -65,6 +68,11 @@ Linus Torvalds for making Linux (http://linux-kernel.org/).
 The Apache Group (http://www.apache.org/) for making the free webserver.
 
 Mark Grosberg, who has provided feedback and much butt-kicking to keep me
-and my code honest.  And for prividing the Metaphone code.
+and my code honest.  And for helping me debug some ``simple'' changes
+(cough).
 
+Robert Summers, who was the first victim to volunteer to install the module
+on his system and help be debug the distribution.
+
+Gary A. Parker, who placed the metaphone code I use into the public domain.
 
