@@ -27,6 +27,9 @@
 *
 * History
 *
+* 20060713.1713 1.0.1	spc
+*	Strip spaces from filenames
+*
 * 19991122.1706	1.0.0	spc
 *	Initial release.
 *
@@ -35,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <assert.h>
 
 #include <sys/types.h>
@@ -125,7 +129,9 @@ int main(int argc,char *argv[])
 
 Atom AtomCreate(Size size,Size number,char *name)
 {
-  Atom atom;
+  Atom  atom;
+  char *s;
+  char *d;
   
   assert(size >  0);
   assert(name != NULL);
@@ -134,6 +140,16 @@ Atom AtomCreate(Size size,Size number,char *name)
   atom->number = number;
   atom->name   = dup_string(name);
   atom->size   = size;
+
+  /*-----------------------------------
+  ; strip spaces from the atom name
+  ;----------------------------------*/
+
+  for (s = d = atom->name ; *s ; s++)
+    if (!isspace(*s))
+      *d++ = *s;
+  *d = '\0';
+
   return(atom);
 }
 
