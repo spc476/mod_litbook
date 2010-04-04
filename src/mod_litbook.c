@@ -1,22 +1,101 @@
 
 /******************************************************************
 *
-* mod_litalpha.c	- Apache module for serving up literature
+* mod_litbook.c		- Apache module for serving up literature
 *			  according to certain conventions. 
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*
+* Comments, questions and criticisms can be sent to: sean@conman.org
 *
 * -----------------------------------------------------------------
 *
 * History:
 *
-* 19991113.2355	1.1	spc
+* 19991121.0024	1.0.4a	spc	(comment)
+*	I found out that the ptemp doesn't exist, ptrans does, but it's
+*	statically defined in http_main.c so I can't use it.  I suppose
+*	I could use malloc()/free() but I'd rather stick with the Apache
+*	API if I can. 
+*
+*	Sigh.
+*
+* 19991120.1711	1.0.4a	spc	(hack)
+*	Okay, where does Apache keep ptrans?  The transient pool that was
+*	mentioned in the documentation?  Where?  Where?  
+*
+*	Sigh.
+*
+* 19991120.1436	1.0.4	spc	(reliability/bug fix)
+*	Fixed up clt_linecount() to return the size of the longest
+*	line, and fixed up config_litbooktrans() to use this, allocate
+*	a buffer large enough to handle this.  All this at the urgings
+*	of myg.
+*
+*	See what we go through to make bug-free software? 8-)
+*
+*	Also defined my own BUFSIZ constant.  I perhaps tend to overuse
+*	the constant perhaps?  But then why does ANSI C make it available?
+*
+* 19991120.0200	1.0.3	spc	(comment)
+*	myg noted that clt_linecount() has a potential bug if the 
+*	translation file has a line longer than BUFSIZ chars then the
+*	routine will return a bad line count.  This also affects 
+*	config_litbooktrans() since it too assumes lines to be smaller
+*	than BUFSIZ chars in size.
+*
+*	Working around this would either require major hacking (since
+*	the Apache mem API doesn't include a realloc() command, I would
+*	have to do something similar in hr_show_chapter() (see comment)
+*	but across two commands.  I could allocate memory from the tmp
+*	pool, but it gets real messy real quick.
+*
+*	If the system you are on has a BUFSIZ smaller than 80, complain
+*	to your vendor.  While it would be nice to avoid making assumptions,
+*	I'm not entirely sure what to do, other than make sure the trans-
+*	lation file is less than 80 characters wide.
+*
+*	Now, it won't overwrite anything, but it will probably start
+*	to act a bit odd ...
+*
+*	One possible solution:  have clt_linecount() return the length
+*	of the longest line (in addition to the number of lines), allocate
+*	a buffer that big out of the tmp pool and go from there ...
+*
+* 19991118.2300	1.0.3	spc	(feature/hack)
+*	Added a directive to get around one of the gross hacks in the code
+*	(namely, a specification to the directory the handler is covering).
+*	Also added a directive (consider it marked for obsolescense until
+*	I get a way to specify an HTML template file) to mark the title
+*	of the output pages.
+*
+* 19991117.0500	1.0.2	spc	(cosmetic)
+*	Changed the background to a slight offwhite (smoke white I think
+*	is the term ... )
+*
+* 19991113.2355	1.0.1	spc	(bugfix)
 *	Check for references like ``book.0:0'' and return an error.
 *	Also fixed a bug where I was allocating memory for each line
 *	being sent out (not that bad as it's all freed after the request,
 *	but still ... 
 *
-* 19991111.1745	1.0	spc
+*	Also reorganized the code and cleaned it up a bit.
+*
+* 19991111.1745	1.0.0	spc
 *	Initial version.  Support for the Bible (Old and New Testaments)
 *	only.
 *
@@ -46,6 +125,8 @@
 #include "util_script.h"
 #include "http_conf_globals.h"
 
+#define MBUFSIZ		512
+
 /*****************************************************************/
 
 struct bookname
@@ -70,6 +151,8 @@ struct litconfig
 {
   char             *bookroot;
   char             *bookdir;
+  char             *booktld;
+  char		   *booktitle;
   struct bookname  *books;
   struct bookname **abrev;
   struct bookname **fullname;
@@ -81,7 +164,7 @@ struct litconfig
 /*****************************************************************/
 
 	/*-----------------------------------------------
-	; Apache module hooks and configuration hooks.
+	; Apache module hooks
 	;------------------------------------------------*/
 
 static void	  *create_dir_config	(pool *,char *);
@@ -94,13 +177,15 @@ static int	   handle_request	(request_rec *);
 static const char *config_litbookdir	(cmd_parms *,void *,char *);
 static const char *config_litbooktrans	(cmd_parms *,void *,char *);
 static const char *config_litbookindex	(cmd_parms *,void *,char *);
+static const char *config_litbooktld	(cmd_parms *,void *,char *); /* o? */
+static const char *config_litbooktitle	(cmd_parms *,void *,char *); /* o  */
 
 	/*--------------------------------------------------------
 	; Subroutines called by the command processing routines.
 	; These are only used during configuration
 	;---------------------------------------------------------*/
-	
-static size_t	   clt_linecount	(FILE *);
+
+static void	   clt_linecount	(FILE *,size_t *,size_t *);
 static int	   clt_sort_abrev	(const void *,const void *);
 static int	   clt_sort_fullname	(const void *,const void *);
 static int	   clt_sort_soundex	(const void *,const void *);
@@ -109,11 +194,26 @@ static int	   clt_sort_metaphone	(const void *,const void *);
 	/*------------------------------------------------
 	; Subroutines called by handle_request().
 	;------------------------------------------------*/
-	
-static void	   hr_translate_request	(struct bookrequest *,struct litconfig *,char *);
+
+static void        hr_print_request	(
+                                          struct bookrequest *,
+					  struct litconfig   *,
+					  request_rec        *
+					);
+static int         hr_show_chapter	(
+                                          size_t,
+					  size_t,
+					  size_t,
+					  struct litconfig *,
+					  char             *,
+					  request_rec      *
+					);
+static void	   hr_translate_request	(
+                                          struct bookrequest *,
+					  struct litconfig   *,
+					  char               *
+					);
 static char	  *hr_redirect_request	(struct bookrequest *,pool *);
-static void        hr_print_request	(struct bookrequest *,struct litconfig *,request_rec *);
-static int         hr_show_chapter	(size_t,size_t,size_t,struct litconfig *,char *,request_rec *);
 static int	   hr_find_abrev	(const void *,const void *);
 static int	   hr_find_fullname	(const void *,const void *);
 static int	   hr_find_soundex	(const void *,const void *);
@@ -128,7 +228,9 @@ static char	  *trim_lspace		(char *);
 static char	  *trim_tspace		(char *);
 static char	  *trim_space		(char *);
 
-/*******************************************************************/
+/******************************************************************
+*	DATA SECTION
+******************************************************************/
 
 static const handler_rec handler_table[] =
 {
@@ -166,6 +268,24 @@ static command_rec command_table[] =
   },
   
   {
+    "LitbookTLD",
+    config_litbooktld,
+    NULL,
+    RSRC_CONF | OR_OPTIONS,
+    TAKE1,
+    "Same value as the Location directive (see docs)"
+  },
+  
+  {
+    "LitbookTitle",
+    config_litbooktitle,
+    NULL,
+    RSRC_CONF | OR_OPTIONS,
+    TAKE1,
+    "Set the title of pages output by this module"
+  },
+  
+  {
     NULL,
     NULL,
     NULL,
@@ -198,7 +318,9 @@ module MODULE_VAR_EXPORT litbook_module =
   NULL,				/* F post read_request handler	*/
 };
 
-/***********************************************************************/
+/***********************************************************************
+*	CONFIGURATION HOOKS 
+***********************************************************************/
 
 static void *create_dir_config(pool *p,char *dirspec)
 {
@@ -206,14 +328,16 @@ static void *create_dir_config(pool *p,char *dirspec)
   
   assert(p       != NULL);
   
-  plc           = ap_palloc(p,sizeof(struct litconfig));
-  plc->bookroot = NULL;
-  plc->bookdir  = NULL;
-  plc->books    = NULL;
-  plc->abrev    = NULL;
-  plc->fullname = NULL;
-  plc->soundex  = NULL;
-  plc->maxbook  = 0;
+  plc            = ap_palloc(p,sizeof(struct litconfig));
+  plc->bookroot  = NULL;
+  plc->bookdir   = NULL;
+  plc->booktld   = NULL;
+  plc->booktitle = NULL;
+  plc->books     = NULL;
+  plc->abrev     = NULL;
+  plc->fullname  = NULL;
+  plc->soundex   = NULL;
+  plc->maxbook   = 0;
   return(plc);
 }
 
@@ -280,8 +404,9 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char *arg)
   struct litconfig *plc;
   char             *err;
   FILE             *fp;
-  char              buffer[BUFSIZ];
+  char             *buffer;
   int               i;
+  size_t            lsize;
   
   assert(cmd     != NULL);
   assert(mconfig != NULL);
@@ -316,19 +441,25 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char *arg)
                     );
     return(err);
   }
+
+  clt_linecount(fp,&plc->maxbook,&lsize);	/* because we can't realloc */  
+  buffer = ap_palloc(cmd->pool,lsize + 1);	/* ptrans is static! */
+  if (buffer == NULL)
+  {
+    return("NO MEMORY!");
+  }
   
-  plc->maxbook   = clt_linecount(fp);	/* because we can't realloc */
   plc->books     = ap_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname));
   plc->abrev     = ap_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
   plc->fullname  = ap_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
   plc->soundex   = ap_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
   plc->metaphone = ap_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
 
-  for (i = 0 ; (i < plc->maxbook) && (fgets(buffer,BUFSIZ,fp)) ; i++)
+  for (i = 0 ; (i < plc->maxbook) && (fgets(buffer,lsize,fp)) ; i++)
   {
     char *abrev;
     char *fulln;
-    char  mp[BUFSIZ];
+    char  mp[MBUFSIZ];
     int   rc;
     
     abrev = ap_pstrdup(cmd->pool,trim_space(strtok(buffer,",")));
@@ -368,6 +499,127 @@ static const char *config_litbookindex(cmd_parms *cmd,void *mconfig,char *arg)
 
 /*******************************************************************/
 
+static const char *config_litbooktld(cmd_parms *cmd,void *mconfig,char *arg)
+{
+  assert(cmd     != NULL);
+  assert(mconfig != NULL);
+  assert(arg     != NULL);
+  
+  ((struct litconfig *)mconfig)->booktld = ap_pstrdup(cmd->pool,arg);
+  return(NULL);
+}
+
+/*******************************************************************/
+
+static const char *config_litbooktitle(cmd_parms *cmd,void *mconfig,char *arg)
+{
+  assert(cmd     != NULL);
+  assert(mconfig != NULL);
+  assert(arg     != NULL);
+  
+  ((struct litconfig *)mconfig)->booktitle = ap_pstrdup(cmd->pool,arg);
+  return(NULL);
+}
+
+/******************************************************************
+*	CONFIGURATION SUBROUTINES
+******************************************************************/
+
+static void clt_linecount(FILE *fp,size_t *pcount,size_t *plsize)
+{
+  size_t lcount;
+  size_t lsize;
+  size_t lmax;
+  int    c;
+  
+  assert(fp     != NULL);
+  assert(pcount != NULL);
+  assert(plsize != NULL);
+  
+  lcount = lsize = lmax = 0;
+  
+  while((c = fgetc(fp)) != EOF)
+  {
+    lsize++;
+    
+    if (c == '\n')
+    {
+      lcount++;
+      if (lsize > lmax)
+        lmax = lsize;
+      lsize = 0;
+    }
+  }
+  
+  *pcount = lcount + 1;
+  *plsize = lmax;
+  fseek(fp,0,SEEK_SET);
+}
+
+/**********************************************************************/
+
+static int clt_sort_abrev(const void *o1,const void *o2)
+{
+  assert(o1 != NULL);
+  assert(o2 != NULL);
+  
+  return(
+          strcmp(
+                  (*((struct bookname **)o1))->abrev,
+                  (*((struct bookname **)o2))->abrev
+                )
+        );
+}
+
+/*******************************************************************/
+
+static int clt_sort_fullname(const void *o1,const void *o2)
+{
+  assert(o1 != NULL);
+  assert(o2 != NULL);
+
+  return(
+          strcmp(
+                  (*((struct bookname **)o1))->fullname,
+                  (*((struct bookname **)o2))->fullname
+                )
+        );
+}
+
+/*********************************************************************/
+
+static int clt_sort_soundex(const void *o1,const void *o2)
+{
+  assert(o1 != NULL);
+  assert(o2 != NULL);
+
+  return(
+          SoundexCompare(
+                          (*((struct bookname **)o1))->sdx,
+                          (*((struct bookname **)o2))->sdx
+                        )
+        );
+}
+
+/********************************************************************/
+
+static int clt_sort_metaphone(const void *o1,const void *o2)
+{
+  assert(o1 != NULL);
+  assert(o2 != NULL);
+
+  return(
+          strcmp(
+                  (*((struct bookname **)o1))->mp,
+                  (*((struct bookname **)o2))->mp
+                )
+        );
+}
+
+/*****************************************************************
+*	HANDLER HOOK
+******************************************************************/
+
 static int handle_request(request_rec *r)
 {
   struct litconfig   *plc;
@@ -393,6 +645,8 @@ static int handle_request(request_rec *r)
   ;		to then check.  I wonder if there's a way to
   ;		get the location of the handler in which we've
   ;		been installed in ...
+  ;
+  ;		(1.0.3) see comment below
   ;------------------------------------------------------------*/
   
   if (
@@ -414,6 +668,15 @@ static int handle_request(request_rec *r)
   ;		I don't know at this time) how to determine (well,
   ;		not without a lot of hassle) what the top level
   ;		directory is that we're handling.  See ``hack.''
+  ;
+  ;		(1.0.3) Added directive LitbookTLD to easily get
+  ;		the location of the handler.  Not pretty, but saves
+  ;		some code.  Hopefully Apache 2.0 will have a 
+  ;		better module design.
+  ;
+  ;		(1.0.3) Also added directive LitbookTitle so I don't
+  ;		have to embed the title here either.  This WILL go
+  ;		away once I figure out how to handle HTML template.
   ;--------------------------------------------------------------*/
   
   hr_translate_request(&br,plc,&r->path_info[1]);
@@ -426,8 +689,8 @@ static int handle_request(request_rec *r)
                    ap_pstrcat(
 		               r->pool,
 			       "http://",
-			       r->hostname,
-			       "/kj/",		/* hack */
+			       r->hostname,	/* I'm blind!  I'm blind! */
+			       plc->booktld,	/* hack, still */
 			       hr_redirect_request(&br,r->pool),
 			       NULL
 			     )
@@ -455,59 +718,20 @@ static int handle_request(request_rec *r)
   }
   
   ap_rputs(DOCTYPE_HTML_3_2,r);
-  ap_rputs(
-            "<html>\n"
-            "<head>\n"
-            "  <title>The Electric King James</title>\n"
-            "</head>\n"
-            "\n"
-            "<body bgcolor=\"#ffffff\" text=\"#000000\">\n"
-            "\n",
-            r
+  ap_rprintf(
+              r,
+              "<html>\n"
+              "<head>\n"
+              "  <title>%s</title>\n"
+              "</head>\n"
+              "\n"
+              "<body bgcolor=\"#efefef\" text=\"#000000\">\n"
+              "\n",
+              plc->booktitle
           );
 
   hr_print_request(&br,plc,r);
   
-#if 0  
-  ap_rprintf(
-              r,
-              "Dir: %s\n",
-              plc->bookdir
-            );
-
-  ap_rprintf(
-              r,
-              "Request: %s\n"
-              "Unparsed URI: %s\n"
-              "URI: %s\n"
-              "Filemame: %s\n"
-              "Path Info: [%s]\n"
-              "Args: %s\n"
-	      "Redirected URL: [%s]\n"
-	      "Redirect: %d\n"
-              "\n",
-              r->the_request,
-              r->unparsed_uri,
-              r->uri,
-              r->filename,
-              r->path_info,
-              r->args,
-	      br.name,
-	      br.redirect
-            );
-#endif
-
-#if 0
-  {
-    int i;
-    ap_rprintf(r,"Dump List\n");
-    for (i = 0 ; i < plc->maxbook ; i++)
-    {
-      ap_rprintf(r,"\t%s\t%s\n",plc->abrev[i]->abrev,plc->abrev[i]->fullname);
-    }
-  }
-#endif
-
   ap_rputs(
             "\n"
             "</body>\n"
@@ -519,9 +743,15 @@ static int handle_request(request_rec *r)
   return(OK);
 }
 
-/********************************************************************/
+/*******************************************************************
+*	HANDLER SUBROUTINES
+*******************************************************************/
 
-static void hr_print_request(struct bookrequest *pbr,struct litconfig *plc,request_rec *r)
+static void hr_print_request(
+                              struct bookrequest *pbr,
+                              struct litconfig   *plc,
+                              request_rec        *r
+                            )
 {
   int    rc;
   size_t i;
@@ -567,7 +797,7 @@ static int hr_show_chapter(
 {
   long int *iarray;
   FILE     *fp;
-  char      fname[BUFSIZ];
+  char      fname[MBUFSIZ];
   long      max;
   long      i;
   long      s;
@@ -654,184 +884,7 @@ static int hr_show_chapter(
   return(0);
 }
 
-/************************************************************************/      
-
-static size_t clt_linecount(FILE *fp)
-{
-  size_t size;
-  char   buffer[BUFSIZ];
-  
-  assert(fp != NULL);
-  
-  for (size = 0 ; fgets(buffer,BUFSIZ,fp) ; size++)
-    ;
-  fseek(fp,0,SEEK_SET);
-  return(size);
-}
-
-/*******************************************************************/
-
-static int clt_sort_abrev(const void *o1,const void *o2)
-{
-  assert(o1 != NULL);
-  assert(o2 != NULL);
-  
-  return(
-          strcmp(
-                  (*((struct bookname **)o1))->abrev,
-                  (*((struct bookname **)o2))->abrev
-                )
-        );
-}
-
-/*******************************************************************/
-
-static int clt_sort_fullname(const void *o1,const void *o2)
-{
-  const struct bookname *pbn1;
-  const struct bookname *pbn2;
-  
-  assert(o1 != NULL);
-  assert(o2 != NULL);
-  
-  pbn1 = *((struct bookname **)o1);
-  pbn2 = *((struct bookname **)o2);
-  
-  return(strcmp(pbn1->fullname,pbn2->fullname));
-}
-
-/*********************************************************************/
-
-static int clt_sort_soundex(const void *o1,const void *o2)
-{
-  const struct bookname *pbn1;
-  const struct bookname *pbn2;
-  
-  assert(o1 != NULL);
-  assert(o2 != NULL);
-  
-  pbn1 = *((struct bookname **)o1);
-  pbn2 = *((struct bookname **)o2);
-  
-  return(SoundexCompare(pbn1->sdx,pbn2->sdx));
-}
-
-/********************************************************************/
-
-static int clt_sort_metaphone(const void *o1,const void *o2)
-{
-  const struct bookname *pbn1;
-  const struct bookname *pbn2;
-  
-  assert(o1 != NULL);
-  assert(o2 != NULL);
-  
-  pbn1 = *((struct bookname **)o1);
-  pbn2 = *((struct bookname **)o2);
-  
-  return(strcmp(pbn1->mp,pbn2->mp));
-}
-
 /**********************************************************************/
-
-static int hr_find_abrev(const void *key,const void *datum)
-{
-  const struct bookname *pbn = *((struct bookname **)datum);
-  const char            *k   = key;
-  
-  assert(pbn != NULL);
-  assert(k   != NULL);
-  
-  return(strcmp(k,pbn->abrev));
-}
-
-/**********************************************************************/
-
-static int hr_find_fullname(const void *key,const void *datum)
-{
-  const struct bookname *pbn = *((struct bookname **)datum);
-  const char            *k   = key;
-  
-  assert(pbn != NULL);
-  assert(k   != NULL);
-  
-  return(strcmp(k,pbn->fullname));
-}
-
-/*********************************************************************/
-
-static int hr_find_soundex(const void *key,const void *datum)
-{
-  const struct bookname *pbn = *((struct bookname **)datum);
-  const SOUNDEX         *k   = key;
-  
-  assert(pbn != NULL);
-  assert(k   != NULL);
-  
-  return(SoundexCompare(*k,pbn->sdx));
-}
-
-/**********************************************************************/
-
-static int hr_find_metaphone(const void *key,const void *datum)
-{
-  const struct bookname *pbn = *((struct bookname **)datum);
-  const char            *k   = key;
-  
-  assert(pbn != NULL);
-  assert(k   != NULL);
-  
-  return(strcmp(k,pbn->mp));
-}
-
-/********************************************************************/
-
-static char *hr_redirect_request(struct bookrequest *pbr,pool *p)
-{
-  char tc1[64];
-  char tc2[64];
-  char tv1[64];
-  char tv2[64];
-  
-  sprintf(tc1,"%lu",(unsigned long)pbr->c1);
-  sprintf(tc2,"%lu",(unsigned long)pbr->c2);
-  sprintf(tv1,"%lu",(unsigned long)pbr->v1);
-  sprintf(tv2,"%lu",(unsigned long)pbr->v2);
-  
-  if ((pbr->c2 == INT_MAX) && (pbr->v2 == INT_MAX))
-  {
-    if ((pbr->c1 == 1) && (pbr->v1 == 1))
-      return(ap_pstrdup(p,pbr->name));
-    
-    if ((pbr->c1 != 1) && (pbr->v2 == 1))
-      return(ap_pstrcat(p,pbr->name,".",tc1,"-",NULL));
-    
-    return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",NULL));
-  }
-  
-  if (pbr->c1 == pbr->c2)
-  {
-    if ((pbr->v1 == 1) && (pbr->v2 == INT_MAX))
-      return(ap_pstrcat(p,pbr->name,".",tc1,":1",NULL));
-  
-    if (pbr->v1 == pbr->v2)
-      return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,NULL));
-    
-    return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc2,":",tv2,NULL));
-  }
-  
-  if (pbr->v1 == 1)
-  {
-    if (pbr->v2 == INT_MAX)
-      return(ap_pstrcat(p,pbr->name,".",tc1,"-",tc2,NULL));
-    else
-      return(ap_pstrcat(p,pbr->name,".",tc1,"-",tc2,":",tv2,NULL));
-  }
-  
-  return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc1,":",tv2,NULL));
-}
-
-/*********************************************************************/
 
 static void hr_translate_request(
                                   struct bookrequest *pbr,
@@ -839,7 +892,7 @@ static void hr_translate_request(
                                   char               *r
                                 )
 {
-  char              buffer[BUFSIZ];
+  char              buffer[MBUFSIZ];
   char             *p;
   size_t            size;
   struct bookname **pres;
@@ -867,23 +920,57 @@ static void hr_translate_request(
   else
     buffer[0] = toupper(buffer[0]);
   
-  pres = bsearch(buffer,plc->fullname,plc->maxbook,sizeof(struct bookname *),hr_find_fullname);
+  /*--------------------------------------------------------
+  ; quickly:
+  ;
+  ;	if not found fullname
+  ;	  if not found abrev
+  ;	    if not found soundex
+  ;	      if not found metaphone
+  ;             return(NOT FOUND);
+  ;---------------------------------------------------------*/
+
+  pres = bsearch(
+                  buffer,
+                  plc->fullname,
+                  plc->maxbook,
+                  sizeof(struct bookname *),
+                  hr_find_fullname
+                );
   if (pres == NULL)
   {
-    pres = bsearch(buffer,plc->abrev,plc->maxbook,sizeof(struct bookname *),hr_find_abrev);
+    pres = bsearch(
+                    buffer,
+                    plc->abrev,
+                    plc->maxbook,
+                    sizeof(struct bookname *),
+                    hr_find_abrev
+                  );
     if (pres == NULL)
     {
       SOUNDEX sdx = Soundex(buffer);
       
-      pres = bsearch(&sdx,plc->soundex,plc->maxbook,sizeof(struct bookname *),hr_find_soundex);
+      pres = bsearch(
+                      &sdx,
+                      plc->soundex,
+                      plc->maxbook,
+                      sizeof(struct bookname *),
+                      hr_find_soundex
+                    );
       if (pres == NULL)
       {
-        char mp[BUFSIZ];
+        char mp[MBUFSIZ];
         int  rc;
         
-        rc = make_metaphone(buffer,mp,BUFSIZ);
+        rc = make_metaphone(buffer,mp,sizeof(mp));
         if (rc == 0) return;
-        pres = bsearch(mp,plc->metaphone,plc->maxbook,sizeof(struct bookname *),hr_find_metaphone);
+        pres = bsearch(
+                        mp,
+                        plc->metaphone,
+                        plc->maxbook,
+                        sizeof(struct bookname *),
+                        hr_find_metaphone
+                      );
         if (pres == NULL) return;
       }
     }
@@ -995,7 +1082,96 @@ static void hr_translate_request(
   if (*r) pbr->redirect = *r;
 }
 
+/*******************************************************************/
+
+static char *hr_redirect_request(struct bookrequest *pbr,pool *p)
+{
+  char tc1[64];
+  char tc2[64];
+  char tv1[64];
+  char tv2[64];
+  
+  sprintf(tc1,"%lu",(unsigned long)pbr->c1);
+  sprintf(tc2,"%lu",(unsigned long)pbr->c2);
+  sprintf(tv1,"%lu",(unsigned long)pbr->v1);
+  sprintf(tv2,"%lu",(unsigned long)pbr->v2);
+  
+  if ((pbr->c2 == INT_MAX) && (pbr->v2 == INT_MAX))
+  {
+    if ((pbr->c1 == 1) && (pbr->v1 == 1))
+      return(ap_pstrdup(p,pbr->name));
+    
+    if ((pbr->c1 != 1) && (pbr->v2 == 1))
+      return(ap_pstrcat(p,pbr->name,".",tc1,"-",NULL));
+    
+    return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",NULL));
+  }
+  
+  if (pbr->c1 == pbr->c2)
+  {
+    if ((pbr->v1 == 1) && (pbr->v2 == INT_MAX))
+      return(ap_pstrcat(p,pbr->name,".",tc1,":1",NULL));
+  
+    if (pbr->v1 == pbr->v2)
+      return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,NULL));
+    
+    return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc2,":",tv2,NULL));
+  }
+  
+  if (pbr->v1 == 1)
+  {
+    if (pbr->v2 == INT_MAX)
+      return(ap_pstrcat(p,pbr->name,".",tc1,"-",tc2,NULL));
+    else
+      return(ap_pstrcat(p,pbr->name,".",tc1,"-",tc2,":",tv2,NULL));
+  }
+  
+  return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc1,":",tv2,NULL));
+}
+
 /**********************************************************************/
+
+static int hr_find_abrev(const void *key,const void *datum)
+{
+  assert(datum != NULL);
+  assert(key   != NULL);
+
+  return(strcmp(key,(*((struct bookname **)datum))->abrev));
+}
+
+/**********************************************************************/
+
+static int hr_find_fullname(const void *key,const void *datum)
+{
+  assert(datum != NULL);
+  assert(key   != NULL);
+
+  return(strcmp(key,(*((struct bookname **)datum))->fullname));
+}
+
+/*********************************************************************/
+
+static int hr_find_soundex(const void *key,const void *datum)
+{
+  assert(datum != NULL);
+  assert(key   != NULL);
+
+  return(SoundexCompare(*((SOUNDEX *)key),(*((struct bookname **)datum))->sdx));
+}
+
+/**********************************************************************/
+
+static int hr_find_metaphone(const void *key,const void *datum)
+{
+  assert(datum != NULL);
+  assert(key   != NULL);
+
+  return(strcmp(key,(*((struct bookname **)datum))->mp));
+}
+
+/************************************************************************
+*	MISC UTIL SUBROUTINES
+************************************************************************/
 
 static char *trim_lspace(char *s)
 {

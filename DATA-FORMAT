@@ -1,0 +1,82 @@
+
+Translation file:
+
+  The translation file is used to translate an abbreviation to the full name
+for a given book.  This is a simple flat text file where each record is a
+separate line with comma separated fields.  The first field is an
+abbreviation and the second field is the full name.
+
+  No blank lines or comments are allowed in this file.
+
+  A version for the King James Bible is provided in the file `thebooks'.
+
+Example:
+
+	Ge      , Genesis
+	Ex      , Exodus
+	Lev     , Leviticus
+	Nu      , Numbers
+	Dt      , Deuteronomy
+
+Bible Data files:
+
+  The underlying filesystem is used as the database engine for mod_litbook. 
+A top level directory is created, below which each book is stored in its own
+directory, named after the full name of the book:
+	
+        bible/
+          |
+          +-Genesis/
+          |
+          +-Exodus/
+          |
+         etc
+
+  Within each directory are two files per chapter, one containing the verses
+and the other an index into the verse file.  Each chapter is numbered:
+
+         bible/
+           |
+           +-Genesis/
+           |    |
+           |    +-1
+           |    |
+           |    +-1.index
+           |    |
+           |    +-2
+           |    |
+           |    +-2.index
+           |    |
+          etc  etc
+
+  The index file is a binary file consisting of unsigned long values (size
+and storage representation dependant upon system).  The first such value in
+the file is the total number of verses for that chapter.  The succeding
+values are offsets into the text file for each specific verse, with the
+difference between two such values the size (in bytes) of that verse.  The
+last value stored in the index file points to one byte past the end of the
+file and is used to calculate the length of the last verse.
+
+  For instance, on my system (Linux for the Intel platform) unsigned longs
+are 4 bytes stored little-endian.  A dump of the index file for Zephaniah
+Chapter 2 (bible/Zephaniah/2.index):
+
+	00000000: 0F 00 00 00 00 00 00 00 47 00 00 00 EC 00 00 00
+	00000010: 95 01 00 00 16 02 00 00 E8 02 00 00 3E 03 00 00
+	00000020: 1C 04 00 00 C1 04 00 00 EB 05 00 00 6F 06 00 00
+	00000030: 19 07 00 00 4B 07 00 00 D2 07 00 00 DD 08 00 00
+	00000040: C8 09 00 00
+
+  The first four bytes (0F 00 00 00) indicates that there are 15 verses in
+this chapter.  The next four bytes (00 00 00 00) say that the first verse is
+at offset 0 in the text file.  The third set of byte (47 00 00 00) says that
+the second verse starts 71 bytes into the text file.  The difference between
+the two (71) is the size of the first verse.
+
+  The text file contains the text.  Book, chapter and verse headings should
+not be included as they are supplied by mod_litbook.  
+
+  The text file produced by the supplied breakout program contains no line
+breaks.  This is not a requirement (as long as the offsets are calculated
+correctly) and was done only to preserve some space.
+

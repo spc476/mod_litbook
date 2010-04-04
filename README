@@ -1,0 +1,70 @@
+
+                                 mod_litbook
+                                 Version 1.0
+
+What is mod_litbook?
+--------------------
+
+  mod_litbook is an experiment in web technology, namely, the referencing
+and displaying of hiarchial information using a notation commonly used to
+refer to such information.  In the case of the Bible, this is generally the
+``Book chapter:verse'' notation.
+
+  I've been following several initiatives for some time, namely Project
+Xanadu (http://www.xanadu.com/), Project Zope (http://www.zope.org) and the
+web usability guide by Jakob Nielson (http://www.useit.com/alertbox/) and
+the idea of being able to specify a document, or select portions of a
+document, as part of the URL seemed like an interesting project to work on.
+
+  I decided to use the Bible as a proof-of-concept since I could get an
+electronic copy of the King James Bible from Project Gutenberg
+(http://www.promo.net/pg/) and it's one of the most well known hiarchially
+structured documents in existance.  And none of the other online bibles
+allowed one to easily (as part of the URL) retrieve a select portion of it. 
+Sure, you could get an entire book, or one chapter or a select verse, but
+what about a mixture (such as Genesis 6:9-9:17, the Flood Story)?  
+
+What mod_litbook is not:
+------------------------
+
+  And that's generic enough to be used for any project.  A project that can
+be referenced as ``Book chapter:verse'' yes.  But currently, not much else. 
+But the experiment is still going on and I do have plans on making
+mod_litbook more generic in nature, or have a way to extend the
+functionality.
+
+Why is the King James Bible missing from your distribution?
+-----------------------------------------------------------
+
+  Because I didn't feel right in redistributing the copy I downloaded from
+Project Gutenberg.  Also, the final format used for mod_litbook is fairly
+tied to the architecture of the system currently serving it up (technically,
+a 32-bit little-endian byte addressible system using ASCII).  Oh, that, and
+that it would probably add an additional five megs to the distribution and
+that's something I didn't want to add.
+
+  I do, however, include the program I used to create the datafiles used by
+mod_litbook, although it's specific to the Project Gutenberg distribution of
+the King James Bible.
+
+Licensing
+---------
+
+  This project is released under the GNU GPL, which is specified in the
+LICENSING file.  Check out the GNU Project (http://www.gnu.org) for more
+information about this licence.
+
+Acknowledgements
+----------------
+
+The GNU Organization for making several significant free software packages
+and their license.
+
+Linus Torvalds for making Linux (http://linux-kernel.org/).
+
+The Apache Group (http://www.apache.org/) for making the free webserver.
+
+Mark Grosberg, who has provided feedback and much butt-kicking to keep me
+and my code honest.  And for prividing the Metaphone code.
+
+
