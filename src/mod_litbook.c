@@ -22,84 +22,9 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
-* -----------------------------------------------------------------
-*
-* History:
-*
-* 19991121.0024	1.0.4a	spc	(comment)
-*	I found out that the ptemp doesn't exist, ptrans does, but it's
-*	statically defined in http_main.c so I can't use it.  I suppose
-*	I could use malloc()/free() but I'd rather stick with the Apache
-*	API if I can. 
-*
-*	Sigh.
-*
-* 19991120.1711	1.0.4a	spc	(hack)
-*	Okay, where does Apache keep ptrans?  The transient pool that was
-*	mentioned in the documentation?  Where?  Where?  
-*
-*	Sigh.
-*
-* 19991120.1436	1.0.4	spc	(reliability/bug fix)
-*	Fixed up clt_linecount() to return the size of the longest
-*	line, and fixed up config_litbooktrans() to use this, allocate
-*	a buffer large enough to handle this.  All this at the urgings
-*	of myg.
-*
-*	See what we go through to make bug-free software? 8-)
-*
-*	Also defined my own BUFSIZ constant.  I perhaps tend to overuse
-*	the constant perhaps?  But then why does ANSI C make it available?
-*
-* 19991120.0200	1.0.3	spc	(comment)
-*	myg noted that clt_linecount() has a potential bug if the 
-*	translation file has a line longer than BUFSIZ chars then the
-*	routine will return a bad line count.  This also affects 
-*	config_litbooktrans() since it too assumes lines to be smaller
-*	than BUFSIZ chars in size.
-*
-*	Working around this would either require major hacking (since
-*	the Apache mem API doesn't include a realloc() command, I would
-*	have to do something similar in hr_show_chapter() (see comment)
-*	but across two commands.  I could allocate memory from the tmp
-*	pool, but it gets real messy real quick.
-*
-*	If the system you are on has a BUFSIZ smaller than 80, complain
-*	to your vendor.  While it would be nice to avoid making assumptions,
-*	I'm not entirely sure what to do, other than make sure the trans-
-*	lation file is less than 80 characters wide.
-*
-*	Now, it won't overwrite anything, but it will probably start
-*	to act a bit odd ...
-*
-*	One possible solution:  have clt_linecount() return the length
-*	of the longest line (in addition to the number of lines), allocate
-*	a buffer that big out of the tmp pool and go from there ...
-*
-* 19991118.2300	1.0.3	spc	(feature/hack)
-*	Added a directive to get around one of the gross hacks in the code
-*	(namely, a specification to the directory the handler is covering).
-*	Also added a directive (consider it marked for obsolescense until
-*	I get a way to specify an HTML template file) to mark the title
-*	of the output pages.
-*
-* 19991117.0500	1.0.2	spc	(cosmetic)
-*	Changed the background to a slight offwhite (smoke white I think
-*	is the term ... )
-*
-* 19991113.2355	1.0.1	spc	(bugfix)
-*	Check for references like ``book.0:0'' and return an error.
-*	Also fixed a bug where I was allocating memory for each line
-*	being sent out (not that bad as it's all freed after the request,
-*	but still ... 
-*
-*	Also reorganized the code and cleaned it up a bit.
-*
-* 19991111.1745	1.0.0	spc
-*	Initial version.  Support for the Bible (Old and New Testaments)
-*	only.
-*
 *******************************************************************/
+
+/*#define NDEBUG*/
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -114,6 +39,7 @@
 
 #include "soundex.h"
 #include "metaphone.h"
+#include "tumbler.h"
 
 #include "httpd.h"
 #include "http_config.h"
@@ -227,6 +153,7 @@ static int	   hr_find_metaphone	(const void *,const void *);
 static char	  *trim_lspace		(char *);
 static char	  *trim_tspace		(char *);
 static char	  *trim_space		(char *);
+static int         empty_string		(char *);
 
 /******************************************************************
 *	DATA SECTION
@@ -461,21 +388,51 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char *arg)
     char *fulln;
     char  mp[MBUFSIZ];
     int   rc;
+
+    if (empty_string(buffer))
+    {
+      plc->maxbook--;
+      break;
+    }
     
-    abrev = ap_pstrdup(cmd->pool,trim_space(strtok(buffer,",")));
-    fulln = ap_pstrdup(cmd->pool,trim_space(strtok(NULL,",\n")));
+    abrev = strtok(buffer,",");
+    fulln = strtok(NULL,",\n");
+    
+    if ((abrev == NULL) || (fulln == NULL)) break;
+        
+    abrev = ap_pstrdup(cmd->pool,trim_space(abrev));
+    fulln = ap_pstrdup(cmd->pool,trim_space(fulln));
     rc    = make_metaphone(fulln,mp,sizeof(mp));
     
     plc->books[i].abrev    = abrev;
     plc->books[i].fullname = fulln;
     plc->books[i].sdx      = isdigit(*fulln) ? Soundex(fulln+1) : Soundex(fulln);
-    plc->books[i].mp       = mp;
+    plc->books[i].mp       = ap_pstrdup(cmd->pool,mp);
     
     plc->abrev[i] = plc->fullname [i] = plc->soundex[i] 
                   = plc->metaphone[i] = &plc->books [i];
   }
   
   ap_pfclose(cmd->pool,fp);
+  
+  if (i != plc->maxbook)
+  {
+    char tmpbuf[MBUFSIZ];
+    
+    sprintf(tmpbuf,"%lu",(unsigned long)i);
+    
+    err = ap_pstrcat(
+                      cmd->pool,
+                      cmd->cmd->name,
+                      " : " ,
+                      "translation file ",
+                      arg,
+                      " is corrupted on or around line ",
+                      tmpbuf,
+                      NULL
+                    );
+    return(err);
+  }
   
   qsort(plc->abrev,    plc->maxbook,sizeof(struct bookname *),clt_sort_abrev);
   qsort(plc->fullname, plc->maxbook,sizeof(struct bookname *),clt_sort_fullname);
@@ -551,8 +508,20 @@ static void clt_linecount(FILE *fp,size_t *pcount,size_t *plsize)
     }
   }
   
-  *pcount = lcount + 1;
-  *plsize = lmax;
+  /*----------------------------------------------------
+  ; (1.0.5) if lsize > 0 then the last line in the file 
+  ; does not end with a '\n'.  Adjust accordingly.
+  ;
+  ; (1.0.7) if the last line doesn't end with a '\n' and 
+  ; it's the longest line, lmax isn't the maximum line 
+  ; size.
+  ;
+  ; (1.0.8) adjust lsize by 1 to adjust for
+  ; fgets()/strtok() interaction.
+  ;-----------------------------------------------------*/
+  
+  *pcount = lcount + ((lsize > 0) ? 1 : 0) ;
+  *plsize = 1 + ((lsize > lmax) ? lsize : lmax);
   fseek(fp,0,SEEK_SET);
 }
 
@@ -669,27 +638,36 @@ static int handle_request(request_rec *r)
   ;		not without a lot of hassle) what the top level
   ;		directory is that we're handling.  See ``hack.''
   ;
-  ;		(1.0.3) Added directive LitbookTLD to easily get
-  ;		the location of the handler.  Not pretty, but saves
-  ;		some code.  Hopefully Apache 2.0 will have a 
-  ;		better module design.
+  ; (1.0.3) Added directive LitbookTLD to easily get the location of the
+  ; handler.  Not pretty, but saves some code.  Hopefully Apache 2.0 will
+  ; have a better module design.
   ;
-  ;		(1.0.3) Also added directive LitbookTitle so I don't
-  ;		have to embed the title here either.  This WILL go
-  ;		away once I figure out how to handle HTML template.
+  ; (1.0.3) Also added directive LitbookTitle so I don't have to embed the
+  ; title here either.  This WILL go away once I figure out how to handle
+  ; HTML template.
+  ;
+  ; (1.0.6) Get the hostname AND the port to redirect to.
   ;--------------------------------------------------------------*/
   
   hr_translate_request(&br,plc,&r->path_info[1]);
   if (br.name == NULL) return(HTTP_NOT_FOUND);
-  if (1 && br.redirect)
+  if (br.redirect)
   {
+    char tportnum[MBUFSIZ];
+
+    if (r->server->port != 80)
+      sprintf(tportnum,":%lu",(unsigned long)r->server->port);
+    else
+      tportnum[0] = '\0';
+     
     ap_table_setn(
                    r->headers_out,
                    "Location",
                    ap_pstrcat(
 		               r->pool,
 			       "http://",
-			       r->hostname,	/* I'm blind!  I'm blind! */
+			       r->server->server_hostname,
+			       tportnum,
 			       plc->booktld,	/* hack, still */
 			       hr_redirect_request(&br,r->pool),
 			       NULL
@@ -1204,3 +1182,15 @@ static char *trim_space(char *s)
 
 /********************************************************************/
 
+static int empty_string(char *s)
+{
+  assert(s != NULL);
+  
+  for ( ; *s ; s++)
+  {
+    if (isprint(*s)) return(0);
+  }
+  return(1);
+}
+
+/*********************************************************************/
