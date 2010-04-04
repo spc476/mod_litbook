@@ -62,7 +62,7 @@ the mod_litbook module installed.
 *
 *********************************************************************
 
-Step 1. Retrieve a copy of the King James Bible.
+Step 1. Retreive a copy of the King James Bible.
 
   You will need to retrieve a copy of the King James Bible from Project
 Gutenberg (http:// ... ) and download a copy.  The reason I'm not providing
@@ -70,7 +70,7 @@ a copy of it myself is that Project Gutenberg needs the publicity.  Also,
 mod_litbook can be used with other similiarly structured documents, such as
 the Book of Mormom or the Bible in another language.
 
-Step 2. Edit the King James Bible file.
+Step 2. Convert King James Bible to native text format.
 
   First step is to ensure that the text file is in the native text format
 for your platform.  Under UNIX, this means each line has to end with a
@@ -80,6 +80,20 @@ in question is called ``bible.txt''):
 
 	tr -d '\015' <bible.txt >bible.work
 
+Step 3. Convert all tab characters to spaces.
+
+  You now need to change all the tab characters (ASCII character 9) to
+spaces (ASCII character 32).  Under UNIX this can be easily accomplised by
+running the following command (assuming that the file in question is called
+``bible.work''):
+
+	tr '\011' ' ' <bible.work >bible.w2
+
+  If you system is something other than UNIX, consult the documentation or a
+local expert if you do not know how to accomplish this.
+
+Step 4. Edit the King James Bible.
+
   You will then need to delete all the text up to the line that reads
 
 	Book 01 Genesis
@@ -88,30 +102,47 @@ in question is called ``bible.txt''):
 
 	022:021 The grace of our Lord Jesus Christ be with you all. Amen.
 
-Step 3. Build the program to create the data files.
+Step 5. Build the program to create the data files.
 
   Change into the src directory and type `make breakout'.  This will create
-the breakout program which will use the edited Bible from Step 2 to create
-the required data files.  Make a directory to contain the data files, and
-from that directory:
+the breakout program which will use the edited Bible from Steps 2-4 to create
+the required data files.  
 
-	/path/to/breakout </path/to/edited_bible
+Step 6. Create the location for the data files.
+
+  Create a directory to contain the datafiles that will be created.  For
+example, on my system, I did:
+
+	cd /usr/services/httpd/sites/bible.conman.org
+	mkdir bible
+
+Step 7. Create the datafiles.
+
+  Change into the directory you just created and execute the following:
+
+	/path/to/breakout < /path/to/edited_bible
 
   This program will create a directory per Bible book, and in each
 directory, two files per chapter.  The ones named ``XX.index'' contain
 information about the number of verses per chapter and the location of each
 verse in the corresponding ``XX'' file (where XX is a number).
 
+  For example, on my system, I did the following:
+
+	cd /usr/services/httpd/sites/bible.conman.org/bible
+	/home/spc/apps/mod_litbook/src/breakout < /tmp/bible.w2
+
 	[ If you want to use another book, see the file DATA-FORMAT for
 	information about the format required by mod_litbook.  You will
 	be on your own in getting the book translated to the proper 
 	format.]
 
-Step 4. Ensure the translation file exists.
+Step 8. Ensure the translation file exists.
 
   The translation file is a simple text file that maps Bible book names to
-their abbreviations.  I do provide a file (thebooks) for the King James
-Bible.
+their abbreviations.  I do provide a file for the King James Bible in the
+main mod_litbook directory called ``thebooks''.  [see the file DATA-FORMAT
+for more information on this file]
 
 *******************************************************************
 *
@@ -148,22 +179,35 @@ verses from.  While it would be nice if it could be from the root location
 of the webserver (`/') for technical reasons this version requires a
 location other than the root (I use `/kj/').
 
+  Also note that the URL space can't overlap an existing directory in the
+web server (for technical reasons).  That means if you have the following as
+a DocumentRoot:
+
+	/www/htdocs/
+
+  And you create a directory below it:
+
+	/www/htdocs/bible/
+
+  You cannot use /bible/ as the URL space for this module.  It won't work.
+
 Step 2. Add the configuration options.
 
   Once this location is selected, you'll need to add the following lines to
 the Apache configuration file:
 
-	<Location [URL space]>
-		LitbookDir		[/path/to/bible/books]
-		LitbookTranslation	[/path/to/thebooks]
-		LitbookIndex		[URL to home page]
-		LitbookTLD		[URL space]
-		LitbookTitle		["Sometitle"]
+	<Location URLspace>
+		LitbookDir		/path/to/bible/books
+		LitbookTranslation	/path/to/thebooks
+		LitbookIndex		http://homepage.tld
+		LitbookTLD		URLspace
+		LitbookTitle		"Sometitle"
 		SetHandler		litbook-handler
 	</Location>
 
-  The items in [] depend upon where you put various files and/or what you
-want it to be defined as.  For example, on my system:
+  All the items need to match your particular configuration except for the
+SetHandler directive, which should be kept as is.  For example, on my
+system:
 
     <Location /kj/>
       LitbookDir         /usr/services/httpd/sites/bible.conman.org/bible
