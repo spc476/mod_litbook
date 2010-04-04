@@ -26,6 +26,12 @@
 *
 * History:
 *
+* 20000519.1744	1.0.9	spc	(bugfix)
+*	Incorrect redirects would occur if a book was misspelled and only one
+*	chapter was specified.  For instance, genesis.1 would be redirected
+*	incorrectly to Genesis.1:1 and not Genesis.1.  A fix in 
+*	hr_redirect_request() was made.
+*
 * 19991127.1800	1.0.8	spc/myg	(bugfix)
 *	Just goes to show that sometimes simple changes often times
 *	aren't (this relates to the changes for 1.0.4).  
@@ -1226,8 +1232,14 @@ static char *hr_redirect_request(struct bookrequest *pbr,pool *p)
   
   if (pbr->c1 == pbr->c2)
   {
+    /*--------------------------------------------------------------
+    ; (1.0.9) This redirect is incorrect.  I'm not sure why I got
+    ; it wrong, but THIS is the correct way to handle this case.
+    ; Sigh.
+    ;--------------------------------------------------------------*/
+
     if ((pbr->v1 == 1) && (pbr->v2 == INT_MAX))
-      return(ap_pstrcat(p,pbr->name,".",tc1,":1",NULL));
+      return(ap_pstrcat(p,pbr->name,".",tc1,NULL));
   
     if (pbr->v1 == pbr->v2)
       return(ap_pstrcat(p,pbr->name,".",tc1,":",tv1,NULL));
