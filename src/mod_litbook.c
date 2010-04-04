@@ -22,6 +22,146 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
+* -----------------------------------------------------------------
+*
+* History:
+*
+* 19991127.1800	1.0.8	spc/myg	(bugfix)
+*	Just goes to show that sometimes simple changes often times
+*	aren't (this relates to the changes for 1.0.4).  
+*
+*	It seems that clt_linecount() was counting the lengths of lines
+*	just a bit too good and passing that value in to fgets() resulted
+*	in a line being read that was exactly that length would result
+*	in the line being stored without the trailing '\n', which would
+*	then cause strtok() to choke, breaking out earlier (see change
+*	for 1.0.5).  
+*
+*	Also, if the last line of the translation file does contain a 
+*	newline, an empty line is read in causing things to get out of
+*	whack yet again.  So added code to check for an empty line,
+*	adjusting the maximum book count appropriately.  Added the routine
+*	empty_string() for that (to handle what may appear to be a blank
+*	line but one that may actually contain whitespace).
+*
+*	Also return an error if the number of lines read in is not the
+*	expected number of lines to be read in.
+*
+* 19991127.1711	1.0.7	spc/myg	(bugfix)
+*	1. Fixed problem in clt_linecount() where if the last line
+*	   doesn't end in a '\n' and is the longest line, the wrong
+*	   longest line length would be returned. (thanks myg).
+*
+*	2. in config_litbooktrans(), the metaphone value was being
+*	   corrupted (pointing to a locally allocated array instead
+*	   of making a copy) (thank myg).
+*
+* 19991127.0545	1.0.6	spc	(bugfix)
+*	If the server isn't on port 80, redirects were not being properly
+*	redirected.  Fixed, but wonder about the cleanliness of the fix.
+*	Can I actually look at r->server or not?  I assume so ... 
+*
+*	Also found the proper include file to get the prototype to mkdir().
+*
+* 19991126.2214	1.0.5	spc	(bugfix)
+*	You know, I should TEST changes before commiting them.  Especially
+*	SIMPLE THIS CAN'T BREAK type changes.
+*
+*	Basically, the change to 1.0.3->1.0.4 introduced two bugs.  The
+*	first was related to the second but kept the second one hidden because
+*	of a core dump.
+*
+*	The first was in config_litbooktrans() as I'm parsing the file.
+*	The strtok() function was returning NULL when I wasn't expecting
+*	it to return NULL at all.  Now I check the return code (gotta
+*	remember---data is coming in from external source that I (as the
+*	program) don't control so checking the data is paramount).
+*
+*	The second has to do with the changes made in the 1.0.3 to 1.0.4
+*	transition.  As per comments from Mark I rewrote the code to count
+*	lines but didn't handle the end of the file properly.  It does
+*	now.
+*
+*	All of this came about when azagthoth@azagthoth-reborn.com had
+*	problems with the webserver crashing after installing the module.
+*	I first thought it might have been the Linux 2.2 kernel as another
+*	project I worked on failed on a 2.2 kernel.  Imagine my surprise
+*	when I actually tested the module on my 2.0 kernel and it still
+*	failed!  Oops.
+*
+* 19991121.0024	1.0.4a	spc	(comment)
+*	I found out that the ptemp doesn't exist, ptrans does, but it's
+*	statically defined in http_main.c so I can't use it.  I suppose
+*	I could use malloc()/free() but I'd rather stick with the Apache
+*	API if I can. 
+*
+*	Sigh.
+*
+* 19991120.1711	1.0.4a	spc	(hack)
+*	Okay, where does Apache keep ptrans?  The transient pool that was
+*	mentioned in the documentation?  Where?  Where?  
+*
+*	Sigh.
+*
+* 19991120.1436	1.0.4	spc	(reliability/bug fix)
+*	Fixed up clt_linecount() to return the size of the longest
+*	line, and fixed up config_litbooktrans() to use this, allocate
+*	a buffer large enough to handle this.  All this at the urgings
+*	of myg.
+*
+*	See what we go through to make bug-free software? 8-)
+*
+*	Also defined my own BUFSIZ constant.  I perhaps tend to overuse
+*	the constant perhaps?  But then why does ANSI C make it available?
+*
+* 19991120.0200	1.0.3	spc	(comment)
+*	myg noted that clt_linecount() has a potential bug if the 
+*	translation file has a line longer than BUFSIZ chars then the
+*	routine will return a bad line count.  This also affects 
+*	config_litbooktrans() since it too assumes lines to be smaller
+*	than BUFSIZ chars in size.
+*
+*	Working around this would either require major hacking (since
+*	the Apache mem API doesn't include a realloc() command, I would
+*	have to do something similar in hr_show_chapter() (see comment)
+*	but across two commands.  I could allocate memory from the tmp
+*	pool, but it gets real messy real quick.
+*
+*	If the system you are on has a BUFSIZ smaller than 80, complain
+*	to your vendor.  While it would be nice to avoid making assumptions,
+*	I'm not entirely sure what to do, other than make sure the trans-
+*	lation file is less than 80 characters wide.
+*
+*	Now, it won't overwrite anything, but it will probably start
+*	to act a bit odd ...
+*
+*	One possible solution:  have clt_linecount() return the length
+*	of the longest line (in addition to the number of lines), allocate
+*	a buffer that big out of the tmp pool and go from there ...
+*
+* 19991118.2300	1.0.3	spc	(feature/hack)
+*	Added a directive to get around one of the gross hacks in the code
+*	(namely, a specification to the directory the handler is covering).
+*	Also added a directive (consider it marked for obsolescense until
+*	I get a way to specify an HTML template file) to mark the title
+*	of the output pages.
+*
+* 19991117.0500	1.0.2	spc	(cosmetic)
+*	Changed the background to a slight offwhite (smoke white I think
+*	is the term ... )
+*
+* 19991113.2355	1.0.1	spc	(bugfix)
+*	Check for references like ``book.0:0'' and return an error.
+*	Also fixed a bug where I was allocating memory for each line
+*	being sent out (not that bad as it's all freed after the request,
+*	but still ... 
+*
+*	Also reorganized the code and cleaned it up a bit.
+*
+* 19991111.1745	1.0.0	spc
+*	Initial version.  Support for the Bible (Old and New Testaments)
+*	only.
+*
 *******************************************************************/
 
 /*#define NDEBUG*/
@@ -39,7 +179,6 @@
 
 #include "soundex.h"
 #include "metaphone.h"
-#include "tumbler.h"
 
 #include "httpd.h"
 #include "http_config.h"
