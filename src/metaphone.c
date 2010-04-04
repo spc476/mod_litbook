@@ -1,4 +1,15 @@
 
+/********************************************************************
+*
+* metaphone.c		- Library routines to implement the Metaphone 
+*			  algorithm.
+*
+* Placed into the public domain by Gary A. Parker.
+* Transcribed into machine readable format by Mark Grosberg from
+* the C Gazette Jun/Jul 1991, Volume 5, No 4. Pg #55
+*
+*********************************************************************/
+
 #include <ctype.h>
 #include <string.h>
 
