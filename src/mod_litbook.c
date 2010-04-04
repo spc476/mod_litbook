@@ -26,6 +26,9 @@
 *
 * History:
 *
+* 20080128.2054	1.1.0	spc	(cosmetic)
+*	Changed to using CSS.
+*
 * 20000519.1744	1.0.9	spc	(bugfix)
 *	Incorrect redirects would occur if a book was misspelled and only one
 *	chapter was specified.  For instance, genesis.1 would be redirected
@@ -840,15 +843,16 @@ static int handle_request(request_rec *r)
     return(OK);
   }
   
-  ap_rputs(DOCTYPE_HTML_3_2,r);
+  ap_rputs(DOCTYPE_HTML_4_0S,r);
   ap_rprintf(
               r,
               "<html>\n"
               "<head>\n"
               "  <title>%s</title>\n"
+              "  <link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"/screen.css\">\n"
               "</head>\n"
               "\n"
-              "<body bgcolor=\"#efefef\" text=\"#000000\">\n"
+              "<body>\n"
               "\n",
               plc->booktitle
           );
@@ -883,7 +887,7 @@ static void hr_print_request(
   assert(plc != NULL);
   assert(r   != NULL);
   
-  ap_rprintf(r,"<h1 align=center>%s</h1>\n",pbr->name);
+  ap_rprintf(r,"<h1>%s</h1>\n",pbr->name);
   
   if (pbr->c1 == pbr->c2)
     hr_show_chapter(pbr->c1,pbr->v1,pbr->v2,plc,pbr->name,r);
@@ -967,9 +971,9 @@ static int hr_show_chapter(
   
   if (fp == NULL) return(1);
   
-  ap_rprintf(r,"<h2 align=center>Chapter %lu</h2>\n",(unsigned long)chapter);
+  ap_rprintf(r,"<h2>Chapter %lu</h2>\n",(unsigned long)chapter);
   if (vlow > 1)
-    ap_rprintf(r,"<p align=center>.<br>.<br>.</p>\n");
+    ap_rprintf(r,"<p class=\"skip\">.<br>.<br>.</p>\n");
   
   for (i = vlow ; i <= vhigh ; i++)
   {
@@ -998,9 +1002,9 @@ static int hr_show_chapter(
     p[s] = '\0';
     fseek(fp,iarray[i-1],SEEK_SET);
     fread(p,sizeof(char),s,fp);
-    ap_rprintf(r,"%lu. ",(unsigned long)i);
+    ap_rprintf(r,"<p>%lu. ",(unsigned long)i);
     ap_rputs(p,r);
-    ap_rputs("\n\n<p>\n\n",r);
+    ap_rputs("</p>\n\n",r);
   }
   
   ap_pfclose(r->pool,fp);
