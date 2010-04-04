@@ -1,0 +1,23 @@
+
+1.1.0	January 28, 2008
+
+	* Switched DOCTYPE from 3.2 to 4.01 Strict.
+
+	* Switched all formatting to CSS.
+
+	* Added 'misc/' directory to contain a sample CSS file and a sample
+	  robots.txt file.
+
+	* Updated INSTALL file to note this.
+
+1.0.10	July 13, 2006
+
+	* Fixed a bug in breakout.c where filenames could end up with
+	  spaces.
+
+	* This release never officially released.
+
+1.0.9	May 10, 2000
+
+	* Release version.
+
