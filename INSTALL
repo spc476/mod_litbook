@@ -226,7 +226,13 @@ different.  Just make sure the executable you created is copied over to the
 appropriate server location.  You may have to stop an existing copy of
 Apache before you can copy the new executable over.
 
-Step 4. Start the webserver.
+Step 4. Copy additional files to the root web directory.
+
+  Under the 'misc/' directory you'll find two files---a sample robots.txt
+file (see <http://www.robotstxt.org/orig.html> for more information on this
+file) and a sample CSS file that can be used to style the output.
+
+Step 5. Start the webserver.
 
   And that should be it.  If it doesn't start up, check the error log to see
 what might be wrong.  It might be that you didn't specify the right
