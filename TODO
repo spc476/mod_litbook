@@ -16,3 +16,8 @@
 
 	More immediate:  better <META> tags.
 
+	Maybe adjust the output depending upon an extention ...
+	/kj/Genesis	returns HTML
+	/kj/Genesis.xml	returns XML
+	etc etc
+
