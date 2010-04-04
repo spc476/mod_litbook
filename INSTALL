@@ -11,7 +11,7 @@ Step 1.  Make the soundex library used by mod_litbook.
 the needed library used by mod_litbook.  Make a note of the location of this
 directory.  For instance, on my system, it will be
 
-                       /home/spc/apps/mod_litbook/src
+                       /home/spc/apps/mod_litbook-1.0.9/src
 
 Step 2.  Retrieve and unpack Apache source code.
 
@@ -39,8 +39,8 @@ directory and edit the `Configuration' file to make the following changes:
 
 	For my system, the lines ended up looking like:
 
-	  EXTRA_LIBS=-L/home/spc/apps/mod_litbook/src -lsoundex
-	  EXTRA_INCLUDES=-I/home/spc/apps/mod_litbook/src
+	  EXTRA_LIBS=-L/home/spc/apps/mod_litbook-1.0.9/src -lsoundex
+	  EXTRA_INCLUDES=-I/home/spc/apps/mod_litbook-1.0.9/src
 
   	Add the following line to the end of the file:
 
@@ -130,7 +130,7 @@ verse in the corresponding ``XX'' file (where XX is a number).
   For example, on my system, I did the following:
 
 	cd /usr/services/httpd/sites/bible.conman.org/bible
-	/home/spc/apps/mod_litbook/src/breakout < /tmp/bible.w2
+	/home/spc/apps/mod_litbook-1.0.9/src/breakout < /tmp/bible.w2
 
 	[ If you want to use another book, see the file DATA-FORMAT for
 	information about the format required by mod_litbook.  You will
