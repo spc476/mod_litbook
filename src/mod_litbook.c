@@ -403,6 +403,9 @@ static void *create_dir_config(pool *p,char *dirspec)
   
   assert(p       != NULL);
   
+  if (dirspec == NULL) 
+    return NULL;
+    
   plc            = ap_palloc(p,sizeof(struct litconfig));
   plc->bookroot  = NULL;
   plc->bookdir   = NULL;
