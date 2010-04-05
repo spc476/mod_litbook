@@ -251,7 +251,6 @@ static int	   handle_request	(request_rec *);
 static const char *config_litbookdir	(cmd_parms *,void *,char *);
 static const char *config_litbooktrans	(cmd_parms *,void *,char *);
 static const char *config_litbookindex	(cmd_parms *,void *,char *);
-static const char *config_litbooktld	(cmd_parms *,void *,char *); /* o? */
 static const char *config_litbooktitle	(cmd_parms *,void *,char *); /* o  */
 
 	/*--------------------------------------------------------
@@ -340,15 +339,6 @@ static command_rec command_table[] =
     RSRC_CONF | OR_OPTIONS,
     TAKE1,
     "The URL for the main indexpage for this book"
-  },
-  
-  {
-    "LitbookTLD",
-    config_litbooktld,
-    NULL,
-    RSRC_CONF | OR_OPTIONS,
-    TAKE1,
-    "Same value as the Location directive (see docs)"
   },
   
   {
@@ -602,18 +592,6 @@ static const char *config_litbookindex(cmd_parms *cmd,void *mconfig,char *arg)
   assert(arg     != NULL);
 
   ((struct litconfig *)mconfig)->bookroot = ap_pstrdup(cmd->pool,arg);
-  return(NULL);
-}
-
-/*******************************************************************/
-
-static const char *config_litbooktld(cmd_parms *cmd,void *mconfig,char *arg)
-{
-  assert(cmd     != NULL);
-  assert(mconfig != NULL);
-  assert(arg     != NULL);
-  
-  ((struct litconfig *)mconfig)->booktld = ap_pstrdup(cmd->pool,arg);
   return(NULL);
 }
 
