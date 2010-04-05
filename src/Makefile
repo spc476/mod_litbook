@@ -41,7 +41,7 @@ testmod : testmod.o soundex.o metaphone.o
 all : libsoundex.a breakout testmod
 
 clean : 
-	/bin/rm libsoundex.a breakout testmod *.o *~
+	/bin/rm -rf libsoundex.a breakout testmod *.o *~
 
 #---------------------------------------------------------
 # Rules to compile individual files
