@@ -1,3 +1,9 @@
+NOTE:	This code is wildly out of date.  While this is an Apache module,
+	the version of Apache this was compiled against was Apache 1.3.
+	This code is more for reference than to be actually used.
+
+	You have been warned.
+
 
                                  mod_litbook
                                  Version 1.0
@@ -18,11 +24,11 @@ document, as part of the URL seemed like an interesting project to work on.
 
   I decided to use the Bible as a proof-of-concept since I could get an
 electronic copy of the King James Bible from Project Gutenberg
-(http://www.promo.net/pg/) and it's one of the most well known hiarchially
-structured documents in existance.  And none of the other online bibles
-allowed one to easily (as part of the URL) retrieve a select portion of it. 
-Sure, you could get an entire book, or one chapter or a select verse, but
-what about a mixture (such as Genesis 6:9-9:17, the Flood Story)?  
+(http://www.gutenberg.org/ebooks/10) and it's one of the most well known
+hiarchially structured documents in existance.  And none of the other online
+bibles allowed one to easily (as part of the URL) retrieve a select portion
+of it.  Sure, you could get an entire book, or one chapter or a select
+verse, but what about a mixture (such as Genesis 6:9-9:17, the Flood Story)?
 
 What mod_litbook is not:
 ------------------------
