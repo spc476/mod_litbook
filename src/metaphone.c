@@ -15,13 +15,6 @@
 
 #include "metaphone.h"
 
-#ifndef FALSE
-#  define FALSE 0
-#endif
-#ifndef TRUE
-#  define TRUE !FALSE
-#endif
-
 static char vsfn[26] =
 {
    1,16,4,16,9,2,4,16,9,2,0,2,2,2,1,4,0,2,4,4,1,0,0,0,8,0
@@ -37,12 +30,12 @@ static char vsfn[26] =
 
 #define MAX_WORD_BUF   32
 
-BOOL make_metaphone(char *word, char *metaph, int maxmet)
+bool make_metaphone(char *word, char *metaph, int maxmet)
 {
   char *n, *n_start, *n_end;
   char *metaph_end;
   char  ntrans[MAX_WORD_BUF];
-  BOOL  KSFlag;
+  bool  KSFlag;
   
   memset(metaph,0,maxmet);
   /* Transform word to upper case and remove non-alpha characters */
@@ -53,7 +46,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
       *n++ = toupper(*word);
       
   if (n == ntrans + 1)
-      return FALSE;
+      return false;
       
   /* Begin preprocessing */
   n_end = n;
@@ -91,14 +84,14 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
   /* Now, iterate over the string, stopping at the end of the string or
    * when we have computed sufficient characters.
    */
-  KSFlag = FALSE;
+  KSFlag = false;
   for(metaph_end = metaph + maxmet, n_start = n;
       (n <= n_end) && (metaph < metaph_end);
       n++)
    {
      if (KSFlag)
       {
-        KSFlag    = FALSE;
+        KSFlag    = false;
         *metaph++ = *n;
       }
      else
@@ -194,7 +187,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
                else
                 {
                   *metaph++ = 'K';
-                  KSFlag    = TRUE;
+                  KSFlag    = true;
                 }
                break;
                
@@ -208,6 +201,6 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
    }
    
   *metaph = '\0';
-  return TRUE;
+  return true;
 }
 

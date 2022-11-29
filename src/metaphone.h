@@ -12,9 +12,8 @@
 #ifndef METAPHONE_H
 #define METAPHONE_H
 
-typedef int BOOL;
-
-BOOL            make_metaphone  (char *,char *,int);
+#include <stdbool.h>
+extern bool make_metaphone (char *,char *,int);
 
 #endif
 
