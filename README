@@ -1,12 +1,7 @@
-NOTE:	This code is wildly out of date.  While this is an Apache module,
-	the version of Apache this was compiled against was Apache 1.3.
-	This code is more for reference than to be actually used.
-
-	You have been warned.
-
+NOTE:	This code only works for Apache 2.4. You have been warned.
 
                                  mod_litbook
-                                 Version 1.0
+                                 Version 2.0.0
 
 What is mod_litbook?
 --------------------

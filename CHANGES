@@ -1,4 +1,10 @@
 
+2.0.0	November 28, 2022
+
+	* Upated module for Apache 2.4.36
+
+	* Fixed SOUNDEX codebase.
+
 1.1.0	January 28, 2008
 
 	* Switched DOCTYPE from 3.2 to 4.01 Strict.

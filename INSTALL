@@ -1,148 +1,95 @@
-
-*******************************************************************
-*
-* Installing the mod_litbook module into Apache.
-*
-*******************************************************************
-
-Step 1.  Make the soundex library used by mod_litbook.
-
-  Change into the src directory and type `make'.  This will compile
-the needed library used by mod_litbook.  Make a note of the location of this
-directory.  For instance, on my system, it will be
-
-                       /home/spc/apps/mod_litbook-1.0.9/src
-
-Step 2.  Retrieve and unpack Apache source code.
-
-  You will need the source code to Apache before you can use this module. 
-The source code can be downloaded from Apache at
-<http://www.apache.org/httpd.html>.  The current version is 1.3.9 and that's
-the version this module was originally developed for.  It may work for
-previous versions of Apache 1.3 but as it has not been tested under versions
-prior to 1.3.9 your milage may vary.
-
-Step 3.  Configure Apache to use mod_litbook.
-
-  Change into the src/modules/extra directory under Apache.  Copy (or link)
-the mod_litbook.c file to this directory.  Then, go back up the the src
-directory and edit the `Configuration' file to make the following changes:
-
-	In the ``Makefile configuration'' section, add the following to
-	toe `EXTRA_LIBS' line:
-
-	  -L<src directory of mod_litbook> -lsoundex
-
-	And add the following to the `EXTRA_INCLUDES' line:
-
-	  -I<src directory of mod_litbook>
-
-	For my system, the lines ended up looking like:
-
-	  EXTRA_LIBS=-L/home/spc/apps/mod_litbook-1.0.9/src -lsoundex
-	  EXTRA_INCLUDES=-I/home/spc/apps/mod_litbook-1.0.9/src
-
-  	Add the following line to the end of the file:
-
-	  AddModule modules/extra/mod_litbook.o
-
-  Save the file, and run the `Configure' script.  This will build the
-various Makefiles that Apaches needs.  
-
-Step 4. Compile (or recompile) Apache.
-
-  Go back up to the main Apache directory and follow the instructions on
-compiling Apache (usually, you just have to type `make' at this point to
-make the executable).  At this point you will have an Apache webserver with
-the mod_litbook module installed.  
-
 *********************************************************************
 *
 * Installing the King James Bible.
 *
 *********************************************************************
 
-Step 1. Retreive a copy of the King James Bible.
 
-  You will need to retrieve a copy of the King James Bible from Project
-Gutenberg (http:// ... ) and download a copy.  The reason I'm not providing
-a copy of it myself is that Project Gutenberg needs the publicity.  Also,
-mod_litbook can be used with other similiarly structured documents, such as
-the Book of Mormom or the Bible in another language.
+[ ] 1. Retreive a copy of the King James Bible.
 
-Step 2. Convert King James Bible to native text format.
+	You will need to retrieve a copy of the King James Bible from
+	Project Gutenberg (http:// ...  ) and download a copy.  The reason
+	I'm not providing a copy of it myself is that Project Gutenberg
+	needs the publicity.  Also, mod_litbook can be used with other
+	similiarly structured documents, such as the Book of Mormom or the
+	Bible in another language.
 
-  First step is to ensure that the text file is in the native text format
-for your platform.  Under UNIX, this means each line has to end with a
-single linefeed (LF, character 10).  If you are under UNIX, this can be
-easily accomplished by running the following command (assuming that the file
-in question is called ``bible.txt''):
+[ ] 2. Convert King James Bible to native text format.
+
+	First step is to ensure that the text file is in the native text
+	format for your platform.  Under UNIX, this means each line has to
+	end with a single linefeed (LF, character 10).  If you are under
+	UNIX, this can be easily accomplished by running the following
+	command (assuming that the file in question is called
+	``bible.txt''):
 
 	tr -d '\015' <bible.txt >bible.work
 
-Step 3. Convert all tab characters to spaces.
+[ ] 3. Convert all tab characters to spaces.
 
-  You now need to change all the tab characters (ASCII character 9) to
-spaces (ASCII character 32).  Under UNIX this can be easily accomplised by
-running the following command (assuming that the file in question is called
-``bible.work''):
+	You now need to change all the tab characters (ASCII character 9) to
+	spaces (ASCII character 32).  Under UNIX this can be easily
+	accomplised by running the following command (assuming that the file
+	in question is called ``bible.work''):
 
 	tr '\011' ' ' <bible.work >bible.w2
 
-  If you system is something other than UNIX, consult the documentation or a
-local expert if you do not know how to accomplish this.
+	If you system is something other than UNIX, consult the
+	documentation or a local expert if you do not know how to accomplish
+	this.
 
-Step 4. Edit the King James Bible.
+[ ] 4. Edit the King James Bible.
 
-  You will then need to delete all the text up to the line that reads
+ 	You will then need to delete all the text up to the line that reads
 
-	Book 01 Genesis
+		Book 01 Genesis
 
-  And all the text after the last verse in the bible:
+	And all the text after the last verse in the bible:
 
-	022:021 The grace of our Lord Jesus Christ be with you all. Amen.
+		022:021 The grace of our Lord Jesus Christ be with you all. 
+		Amen.
 
-Step 5. Build the program to create the data files.
+[ ] 5. Build the program to create the data files.
 
-  Change into the src directory and type `make breakout'.  This will create
-the breakout program which will use the edited Bible from Steps 2-4 to create
-the required data files.  
+	Change into the src directory and type `make breakout'.  This will
+	create the breakout program which will use the edited Bible from
+	Steps 2-4 to create the required data files.
 
-Step 6. Create the location for the data files.
+[ ] 6. Create the location for the data files.
 
-  Create a directory to contain the datafiles that will be created.  For
-example, on my system, I did:
+	Create a directory to contain the datafiles that will be created. 
+	For example, on my system, I did:
 
 	cd /usr/services/httpd/sites/bible.conman.org
 	mkdir bible
 
-Step 7. Create the datafiles.
+[ ] 7. Create the datafiles.
 
-  Change into the directory you just created and execute the following:
+	Change into the directory you just created and execute the following:
 
 	/path/to/breakout < /path/to/edited_bible
 
-  This program will create a directory per Bible book, and in each
-directory, two files per chapter.  The ones named ``XX.index'' contain
-information about the number of verses per chapter and the location of each
-verse in the corresponding ``XX'' file (where XX is a number).
+	This program will create a directory per Bible book, and in each
+	directory, two files per chapter.  The ones named ``XX.index''
+	contain information about the number of verses per chapter and the
+	location of each verse in the corresponding ``XX'' file (where XX is
+	a number).
 
-  For example, on my system, I did the following:
+	For example, on my system, I did the following:
 
 	cd /usr/services/httpd/sites/bible.conman.org/bible
 	/home/spc/apps/mod_litbook-1.0.9/src/breakout < /tmp/bible.w2
 
 	[ If you want to use another book, see the file DATA-FORMAT for
-	information about the format required by mod_litbook.  You will
-	be on your own in getting the book translated to the proper 
-	format.]
+	information about the format required by mod_litbook.  You will be
+	on your own in getting the book translated to the proper format.]
 
-Step 8. Ensure the translation file exists.
+[ ] 8. Ensure the translation file exists.
 
-  The translation file is a simple text file that maps Bible book names to
-their abbreviations.  I do provide a file for the King James Bible in the
-main mod_litbook directory called ``thebooks''.  [see the file DATA-FORMAT
-for more information on this file]
+	The translation file is a simple text file that maps Bible book
+	names to their abbreviations.  I do provide a file for the King
+	James Bible in the main mod_litbook directory called ``thebooks''. 
+	[see the file DATA-FORMAT for more information on this file]
 
 *******************************************************************
 *
@@ -150,94 +97,82 @@ for more information on this file]
 *
 *******************************************************************
 
-Step 1. Compile the test program.
+[ ] 1. Compile the test program.
 
-  Change into the src directory and type `make testmod'.  This will compile
-an interactive test program.  There are some tests available via conditional
-compilation but you will have to manually enable those tests in the source
-code.
+	Change into the src directory and type `make testmod'.  This will
+	compile an interactive test program.  There are some tests available
+	via conditional compilation but you will have to manually enable
+	those tests in the source code.
 
-Step 2. Test the data files.
+[ ] 2. Test the data files.
 
-  Run the program `testmod /path/to/translationfile /path/to/books'.  Start
-requesting verses in the form of Book.chapter:verse.  If the datafiles are
-correctly built you will see the requested verse(s) come up on the screen.  
+	Run the program `testmod /path/to/translationfile /path/to/books'. 
+	Start requesting verses in the form of Book.chapter:verse.  If the
+	datafiles are correctly built you will see the requested verse(s)
+	come up on the screen.
 
-NOTE:  there is no prompt when running the program.  To end the program you
-will need to terminate it, typically with ^C (or ^D under UNIX).
+	NOTE:  there is no prompt when running the program.  To end the
+	program you will need to terminate it, typically with ^C (or ^D
+	under UNIX).
 
 *******************************************************************
 *
-* Configuring mod_litbook
+* Installing the mod_litbook module into Apache.
 *
-********************************************************************
+*******************************************************************
 
-Step 1. Decide on the URL space.
+[ ] 1.  Compile mod_litbook.
 
-  You'll need to decide upon the URL space within the website to serve up
-verses from.  While it would be nice if it could be from the root location
-of the webserver (`/') for technical reasons this version requires a
-location other than the root (I use `/kj/').
+	Run 'make'.  If it fails, you may need to locate the 'apxs' program
+	and then run 'make APXS=/path/to/apxs'.  This will compile
+	mod_litbook for use for Apache 2.4.
 
-  Also note that the URL space can't overlap an existing directory in the
-web server (for technical reasons).  That means if you have the following as
-a DocumentRoot:
+[ ] 2. Decide on the URL space.
+
+	You'll need to decide upon the URL space within the website to serve
+	up verses from.  While it would be nice if it could be from the root
+	location of the webserver (`/') for technical reasons this version
+	requires a location other than the root (I use `/kj/').
+
+	Also note that the URL space can't overlap an existing directory in
+	the web server (for technical reasons).  That means if you have the
+	following as a DocumentRoot:
 
 	/www/htdocs/
 
-  And you create a directory below it:
+	And you create a directory below it:
 
 	/www/htdocs/bible/
 
-  You cannot use /bible/ as the URL space for this module.  It won't work.
+	You cannot use /bible/ as the URL space for this module.  It won't
+	work.
 
-Step 2. Add the configuration options.
+[ ] 3.  Configure Apache to use mod_litbook.
 
-  Once this location is selected, you'll need to add the following lines to
-the Apache configuration file:
+	Locate an appropriate web location on your website.  In the Apache
+	configuration for the site under the appriate host, add the
+	following:
 
-	<Location URLspace>
-		LitbookDir		/path/to/bible/books
-		LitbookTranslation	/path/to/thebooks
-		LitbookIndex		http://homepage.tld
-		LitbookTLD		URLspace
-		LitbookTitle		"Sometitle"
+	<Location /url/path/bible>
 		SetHandler		litbook-handler
+		LitbookIndex		<url-to-main-index-page>
+		LitbookDir		/file/path/to/data
+		LitbookTranslation	/file/path/to/data/thebooks
+		LitbookTitle		"The Title Of The Bible"
 	</Location>
 
-  All the items need to match your particular configuration except for the
-SetHandler directive, which should be kept as is.  For example, on my
-system:
+[ ] 4. Copy additional files to the root web directory.
 
-    <Location /kj/>
-      LitbookDir         /usr/services/httpd/sites/bible.conman.org/bible
-      LitbookTranslation /usr/services/httpd/sites/bible.conman.org/thebooks
-      LitbookIndex       http://literature.conman.org/bible/
-      LitbookTLD         /kj/
-      LitbookTitle       "The Electric King James"
-      SetHandler         litbook-handler
-    </Location>
+	Under the 'misc/' directory you'll find two files---a sample
+	robots.txt file (see <http://www.robotstxt.org/orig.html> for more
+	information on this file) and a sample CSS file that can be used to
+	style the output.
 
-Step 3. Ensure the executable has mod_litbook installed.
+[ ] 5. Start the webserver.
 
-  Make sure the web server you are going to run has mod_litbook installed. 
-Usually, the Apache source directory and the actual web server directory are
-different.  Just make sure the executable you created is copied over to the
-appropriate server location.  You may have to stop an existing copy of
-Apache before you can copy the new executable over.
-
-Step 4. Copy additional files to the root web directory.
-
-  Under the 'misc/' directory you'll find two files---a sample robots.txt
-file (see <http://www.robotstxt.org/orig.html> for more information on this
-file) and a sample CSS file that can be used to style the output.
-
-Step 5. Start the webserver.
-
-  And that should be it.  If it doesn't start up, check the error log to see
-what might be wrong.  It might be that you didn't specify the right
-location or forgot to specify a mod_litbook configuration (you do need to
-set a Location, LitbookDir, LitbookTranslation, LitbookIndex, LitbookTLD,
-LitbookTitle and SetHandler).  Or the data files you created aren't in the
-proper format.
-
+	And that should be it.  If it doesn't start up, check the error log
+	to see what might be wrong.  It might be that you didn't specify the
+	right location or forgot to specify a mod_litbook configuration (you
+	do need to set a Location, LitbookDir, LitbookTranslation,
+	LitbookIndex, LitbookTitle and SetHandler).  Or the data files you
+	created aren't in the proper format.
