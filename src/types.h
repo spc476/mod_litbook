@@ -1,8 +1,8 @@
 
 /******************************************************************
 *
-* types.h		- Convienient types and defines I use that others
-*			  may find useful.
+* types.h               - Convienient types and defines I use that others
+*                         may find useful.
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -30,23 +30,23 @@
 #include <stddef.h>
 
 #ifndef FALSE
-#  define FALSE	0
+#  define FALSE 0
 #endif
 #ifndef TRUE
-#  define TRUE	!FALSE
+#  define TRUE  !FALSE
 #endif
 
 #ifndef SIZET_MAX
-#  define SIZET_MAX	~((size_t)0)
+#  define SIZET_MAX     ~((size_t)0)
 #endif
 
 typedef unsigned char   Byte;
-typedef unsigned long	Size;
-typedef unsigned long	Flags;
+typedef unsigned long   Size;
+typedef unsigned long   Flags;
 typedef unsigned long   Type;
 typedef int             Tag;
-typedef void		*Ptr;
-typedef int		(*Fptr)();
+typedef void            *Ptr;
+typedef int             (*Fptr)();
 
 union iall
 {

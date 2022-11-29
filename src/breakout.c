@@ -1,9 +1,9 @@
 
 /******************************************************************
 *
-* breakout.c		- Program to read the Project Gutenberg
-*			  King James Bible and break it into a format
-*			  for use by mod_litbook
+* breakout.c            - Program to read the Project Gutenberg
+*                         King James Bible and break it into a format
+*                         for use by mod_litbook
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -27,11 +27,11 @@
 *
 * History
 *
-* 20060713.1713 1.0.1	spc
-*	Strip spaces from filenames
+* 20060713.1713 1.0.1   spc
+*       Strip spaces from filenames
 *
-* 19991122.1706	1.0.0	spc
-*	Initial release.
+* 19991122.1706 1.0.0   spc
+*       Initial release.
 *
 ********************************************************************/
 
@@ -69,27 +69,27 @@ typedef struct molecule
 
 /**************************************************************/
 
-Atom		 AtomCreate		(Size,Size,char *);
-void		 AtomDestroy		(Atom);
-Molecule	 MoleculeCreate		(Size,char *);
-void		 MoleculeDestroy	(Molecule);
-Molecule	 Genesis		(FILE *);
-void		 BookWrite		(Molecule);
-void		 ChaptersWrite		(Molecule);
-char		*my_fgets		(FILE *);
-void		 setdir			(char *);
-void		 resetdir		(void);
+Atom             AtomCreate             (Size,Size,char *);
+void             AtomDestroy            (Atom);
+Molecule         MoleculeCreate         (Size,char *);
+void             MoleculeDestroy        (Molecule);
+Molecule         Genesis                (FILE *);
+void             BookWrite              (Molecule);
+void             ChaptersWrite          (Molecule);
+char            *my_fgets               (FILE *);
+void             setdir                 (char *);
+void             resetdir               (void);
 
 /************************************************************/
 
 int main(int argc,char *argv[])
 {
   Molecule bible;
-
-  bible = Genesis(stdin);
-
-#if 1
   
+  bible = Genesis(stdin);
+  
+#if 1
+
   BookWrite(bible);
   
 #else
@@ -140,16 +140,16 @@ Atom AtomCreate(Size size,Size number,char *name)
   atom->number = number;
   atom->name   = dup_string(name);
   atom->size   = size;
-
+  
   /*-----------------------------------
   ; strip spaces from the atom name
   ;----------------------------------*/
-
+  
   for (s = d = atom->name ; *s ; s++)
     if (!isspace(*s))
       *d++ = *s;
   *d = '\0';
-
+  
   return(atom);
 }
 
@@ -256,18 +256,18 @@ char *my_fgets(FILE *fpin)
   static char  rbuffer[BUFSIZ];
   static char  sbuffer[65536UL];
   char        *p;
-
+  
   memset(rbuffer,0,sizeof(rbuffer));
   memset(sbuffer,0,sizeof(sbuffer));
   
   for (p = sbuffer ; ; )
   {
     if (fgets(rbuffer,sizeof(rbuffer),fpin) == NULL) break;
-    if (empty_string(rbuffer)) 
+    if (empty_string(rbuffer))
     {
       return(dup_string(&sbuffer[1]));
     }
-
+    
     p += sprintf(p," %s",remove_ctrl(trim_space(rbuffer)));
   }
   
@@ -354,8 +354,8 @@ void setdir(char *dir)
   rc = chdir(dir);
   if (rc != 0)
   {
-    rc = mkdir(dir,0777);	/* no proto in Linux */
-    if (rc != 0) 
+    rc = mkdir(dir,0777);       /* no proto in Linux */
+    if (rc != 0)
     {
       perror("can't create dir---aborting");
       exit(1);

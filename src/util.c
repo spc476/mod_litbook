@@ -1,7 +1,7 @@
 
 /******************************************************************
 *
-* util.c		- Miscellaneous routines I've found useful
+* util.c                - Miscellaneous routines I've found useful
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -45,8 +45,8 @@ char *spc_getenv(char *env)
   {
     p = "";
   }
-
-  ret = dup_string(p);  
+  
+  ret = dup_string(p);
   return(ret);
 }
 
@@ -83,7 +83,7 @@ char *dup_string(char *s)
   char *r;
   
   assert(s != NULL);
-
+  
   r = malloc(strlen(s) + 1);
   if (r == NULL) return(NULL);
   strcpy(r,s);
@@ -120,7 +120,7 @@ char *remove_char(char *s,int (*tstchar)(int))
   char *d   = s;
   
   assert(s != NULL);
-  assert(tstchar);	/* can function pointers be compared to NULL? */
+  assert(tstchar);      /* can function pointers be compared to NULL? */
   
   for ( ; *s ; s++)
   {
@@ -134,7 +134,7 @@ char *remove_char(char *s,int (*tstchar)(int))
 
 char *trim_lspace(char *s)
 {
-  assert(s != NULL);  
+  assert(s != NULL);
   for ( ; (*s) && (isspace(*s)) ; s++)
     ;
   return(s);
@@ -169,7 +169,7 @@ int ctohex(char c)
   
   c -= '0';
   if (c > 9) c -= 7;
-  assert(c >= 0);	/* warning on AIX - apparently chars are unsigned */
+  assert(c >= 0);       /* warning on AIX - apparently chars are unsigned */
   assert(c <  16);
   return(c);
 }
@@ -196,7 +196,7 @@ char *cat_string(char *dest,char *src)
   assert(dest  != NULL);
   assert(src   != NULL);
   assert(*dest == '\0');
-
+  
   for ( ; (*dest = *src) ; dest++ , src++ )
     ;
   return(dest);

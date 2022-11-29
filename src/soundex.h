@@ -1,7 +1,7 @@
 
 /******************************************************************
 *
-* soundex.h		- API for Soundex routines
+* soundex.h             - API for Soundex routines
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -34,15 +34,15 @@ typedef union soundex
 
 /************************************************************************/
 
-SOUNDEX 	 (Soundex)		(char *);
-int		 (SoundexCompare)	(SOUNDEX,SOUNDEX);
-int		 (SoundexEqu)		(SOUNDEX,SOUNDEX);
-char		*(SoundexString)	(char *,SOUNDEX);
+SOUNDEX          (Soundex)              (char *);
+int              (SoundexCompare)       (SOUNDEX,SOUNDEX);
+int              (SoundexEqu)           (SOUNDEX,SOUNDEX);
+char            *(SoundexString)        (char *,SOUNDEX);
 
 /*************************************************************************/
 
-#define SoundexCompare(s1,s2)	((s1).value - (s2).value)
-#define SoundexEqu(s1,s2)	((s1).value == (s2).value)
+#define SoundexCompare(s1,s2)   ((s1).value - (s2).value)
+#define SoundexEqu(s1,s2)       ((s1).value == (s2).value)
 
 #endif
 

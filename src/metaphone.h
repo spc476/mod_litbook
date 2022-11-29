@@ -1,7 +1,7 @@
 
 /*******************************************************************
 *
-* metaphone.h		- API for Metaphone library
+* metaphone.h           - API for Metaphone library
 *
 * Placed into the public domain by Gary A. Parker.
 * Transcribed into machine readable format by Mark Grosberg from
@@ -14,7 +14,7 @@
 
 typedef int BOOL;
 
-BOOL		make_metaphone	(char *,char *,int);
+BOOL            make_metaphone  (char *,char *,int);
 
 #endif
 

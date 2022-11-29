@@ -1,8 +1,8 @@
 
 /******************************************************************
 *
-* soundex.c		- Library routines to implement the Soundex
-*			  algorithm.
+* soundex.c             - Library routines to implement the Soundex
+*                         algorithm.
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -29,7 +29,7 @@
 #include "soundex.h"
 
 #ifdef DDT
-#  define D(x)	x
+#  define D(x)  x
 #else
 #  define D(x)
 #  define NDEBUG
@@ -54,17 +54,17 @@ static char *use[6] =
 SOUNDEX (Soundex)(char *word)
 {
   SOUNDEX sdx;
-  char	  c;
-  char	  last;
-  int	  idx  = 1;
-  int	  i;
-
+  char    c;
+  char    last;
+  int     idx  = 1;
+  int     i;
+  
   assert(word != NULL);
-
+  
   sdx.cval[0] = toupper(*word++);
   sdx.cval[1] = sdx.cval[2] = sdx.cval[3] = '0';
-  last	      = sdx.cval[0];
-
+  last        = sdx.cval[0];
+  
 Soundex_10:
   c = toupper(*word++);
   if (c == 0) goto Soundex_end;
@@ -80,7 +80,7 @@ Soundex_10:
     }
   }
   goto Soundex_10;
-
+  
 Soundex_end:
   return(sdx);
 }

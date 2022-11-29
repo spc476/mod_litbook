@@ -1,8 +1,8 @@
 
 /********************************************************************
 *
-* metaphone.c		- Library routines to implement the Metaphone 
-*			  algorithm.
+* metaphone.c           - Library routines to implement the Metaphone
+*                         algorithm.
 *
 * Placed into the public domain by Gary A. Parker.
 * Transcribed into machine readable format by Mark Grosberg from
@@ -43,18 +43,18 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
   char *metaph_end;
   char  ntrans[MAX_WORD_BUF];
   BOOL  KSFlag;
-
-  memset(metaph,0,maxmet);  
+  
+  memset(metaph,0,maxmet);
   /* Transform word to upper case and remove non-alpha characters */
   for(n = ntrans + 1, n_end = ntrans + MAX_WORD_BUF - 2;
       (*word != '\0') && (n < n_end);
       word++)
    if (isalpha(*word))
       *n++ = toupper(*word);
-  
+      
   if (n == ntrans + 1)
       return FALSE;
-  
+      
   /* Begin preprocessing */
   n_end = n;
   *n++  = '\0';
@@ -64,8 +64,8 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
   switch (*n)
    {
      case 'P': case 'K': case 'G':
-      if (n[1] == 'N') 
-         *n++ = '\0';  
+      if (n[1] == 'N')
+         *n++ = '\0';
       break;
       
      case 'A':
@@ -76,18 +76,18 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
      case 'W':
       if (n[1] == 'R')
          *n++ = '\0';
-      else if (n[1] == 'H')	/* bug fix - 19991121.1056 spc */
+      else if (n[1] == 'H')     /* bug fix - 19991121.1056 spc */
        {
          n[1] = *n;
         *n++  = '\0';
-       } 
+       }
       break;
       
      case 'X':
       *n = 'S';
       break;
-   }     
-  
+   }
+   
   /* Now, iterate over the string, stopping at the end of the string or
    * when we have computed sufficient characters.
    */
@@ -106,10 +106,10 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
         /* drop duplicates except for 'CC' */
         if ((n[-1] == *n) && (*n != 'C'))
             continue;
-        
+            
         if (same(*n) || ((n == n_start) && vowel(*n)))
           *metaph++ = *n;
-        else 
+        else
           switch (*n)
            {
              case 'B':
@@ -131,7 +131,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
                     *metaph++ = 'K';
                 }
                break;
-             
+               
              case 'D':
                *metaph++ = ((n[1] == 'G') && frontv(n[2])) ? 'J' : 'T';
                break;
@@ -145,7 +145,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
                else if (n[1] == 'H' && !noghf(n[-1]) && (n[-4]) != 'H')
                      *metaph = 'F';
                break;
-
+               
              case 'H':
                if (!varson(n[-1]) && (!vowel(n[-1]) || vowel(n[1])))
                  *metaph++ = 'H';
@@ -165,7 +165,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
                break;
                
              case 'S':
-               *metaph++ = ((n[1] == 'H') || ((n[1] == 'I') && 
+               *metaph++ = ((n[1] == 'H') || ((n[1] == 'I') &&
                       (((n[2] == 'O') || (n[2] == 'A'))))) ? 'X' : 'S';
                break;
                
@@ -189,7 +189,7 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
                break;
                
              case 'X':
-               if (n == n_start) 
+               if (n == n_start)
                  *metaph++ = 'S';
                else
                 {
@@ -201,13 +201,13 @@ BOOL make_metaphone(char *word, char *metaph, int maxmet)
               case 'Z':
                *metaph++ = 'S';
                break;
-                                  
+               
            }
       }
-    
+      
    }
-  
+   
   *metaph = '\0';
-  return TRUE;      
+  return TRUE;
 }
 

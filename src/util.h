@@ -1,7 +1,7 @@
 
 /******************************************************************
 *
-* util.h		- API for misc. routines I've found useful
+* util.h                - API for misc. routines I've found useful
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -27,25 +27,25 @@
 #define UTIL_H
 
 #ifndef FALSE
-#  define FALSE	0
+#  define FALSE 0
 #endif
 #ifndef TRUE
-#  define TRUE	!FALSE
+#  define TRUE  !FALSE
 #endif
 
-char		*spc_getenv		(char *);
-char		*up_string		(char *);
-char		*down_string		(char *);
-char		*dup_string		(char *);
-int		 empty_string		(char *);
-char		*remove_ctrl		(char *);
-char		*remove_char		(char *,int (*)(int));
-char		*trim_lspace		(char *);
-char		*trim_tspace		(char *);
-char		*trim_space		(char *);
-int		 ctohex			(char);
-char		 hextoc			(int);
-char		*cat_string		(char *,char *);
+char            *spc_getenv             (char *);
+char            *up_string              (char *);
+char            *down_string            (char *);
+char            *dup_string             (char *);
+int              empty_string           (char *);
+char            *remove_ctrl            (char *);
+char            *remove_char            (char *,int (*)(int));
+char            *trim_lspace            (char *);
+char            *trim_tspace            (char *);
+char            *trim_space             (char *);
+int              ctohex                 (char);
+char             hextoc                 (int);
+char            *cat_string             (char *,char *);
 
 #endif
 

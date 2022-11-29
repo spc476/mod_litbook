@@ -1,7 +1,7 @@
 
 /******************************************************************
 *
-* nodelist.h		- API for double linked lists.
+* nodelist.h            - API for double linked lists.
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -43,38 +43,38 @@ typedef struct list
 
 /***********************************************************************/
 
-void		(ListInit)		(List *);
-void		(ListAddHead)		(List *,Node *);
-void		(ListAddTail)		(List *,Node *);
-Node           *(ListGetHead)		(List *);
-Node           *(ListGetTail)		(List *);
-Node           *(ListRemHead)		(List *);
-Node           *(ListRemTail)		(List *);
-int		(ListEmpty)		(List *);
+void            (ListInit)              (List *);
+void            (ListAddHead)           (List *,Node *);
+void            (ListAddTail)           (List *,Node *);
+Node           *(ListGetHead)           (List *);
+Node           *(ListGetTail)           (List *);
+Node           *(ListRemHead)           (List *);
+Node           *(ListRemTail)           (List *);
+int             (ListEmpty)             (List *);
 
-void		(NodeInsert)		(Node *,Node *);
-void		(NodeRemove)		(Node *);
-Node           *(NodeNext)		(Node *);
-Node           *(NodePrev)		(Node *);
-Node           *(NodeNextW)		(Node *);
-Node           *(NodePrevW)		(Node *);
-int		(NodeValid)		(Node *);
+void            (NodeInsert)            (Node *,Node *);
+void            (NodeRemove)            (Node *);
+Node           *(NodeNext)              (Node *);
+Node           *(NodePrev)              (Node *);
+Node           *(NodeNextW)             (Node *);
+Node           *(NodePrevW)             (Node *);
+int             (NodeValid)             (Node *);
 
 /************************************************************************/
 
 #ifdef SCREAM
 
-#  define NodeValid(n)	(n)->ln_Succ ? (n)->ln_Pred ? 1 : 0 : 0 
-#  define NodeNext(n)	((n)->ln_Succ ? (n)->ln_Pred ? (n)->ln_Succ : (n):(n))
-#  define NodePrev(n)	((n)->ln_Succ ? (n)->ln_Pred ? (n)->ln_Pred : (n):(n))
+#  define NodeValid(n)  (n)->ln_Succ ? (n)->ln_Pred ? 1 : 0 : 0
+#  define NodeNext(n)   ((n)->ln_Succ ? (n)->ln_Pred ? (n)->ln_Succ : (n):(n))
+#  define NodePrev(n)   ((n)->ln_Succ ? (n)->ln_Pred ? (n)->ln_Pred : (n):(n))
 
-#  define ListAddHead(l,n)	NodeInsert((Node *)&(l)->lh_Head,(n))
-#  define ListAddTail(l,n)	NodeInsert((l)->lh_TailPred,(n))
-#  define ListGetHead(l)	(l)->lh_Head
-#  define ListGetTail(l)	(l)->lh_TailPred
-#  define ListEmpty(l)		((l)->lh_Head == (Node *)&(l)->lh_Tail)
+#  define ListAddHead(l,n)      NodeInsert((Node *)&(l)->lh_Head,(n))
+#  define ListAddTail(l,n)      NodeInsert((l)->lh_TailPred,(n))
+#  define ListGetHead(l)        (l)->lh_Head
+#  define ListGetTail(l)        (l)->lh_TailPred
+#  define ListEmpty(l)          ((l)->lh_Head == (Node *)&(l)->lh_Tail)
 
 #endif
-	
+
 #endif
 

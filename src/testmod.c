@@ -1,8 +1,8 @@
 
 /******************************************************************
 *
-* testmod.c		- Program to interactively test the algorithms
-*			  used in mod_litbook.
+* testmod.c             - Program to interactively test the algorithms
+*                         used in mod_litbook.
 *
 * Copyright 1999 by Sean Conner.  All Rights Reserved.
 *
@@ -26,8 +26,8 @@
 *
 * History:
 *
-* 19991122.1712	1.0.0	spc
-*	Initial release
+* 19991122.1712 1.0.0   spc
+*       Initial release
 *
 ********************************************************************/
 
@@ -43,7 +43,7 @@
 #include "soundex.h"
 #include "metaphone.h"
 
-#define BUMPSIZE	10
+#define BUMPSIZE        10
 
 /***************************************************************/
 
@@ -67,24 +67,24 @@ struct bookrequest
 
 /*************************************************************/
 
-static void	 translate_request	(struct bookrequest *,char *);
-static void	 read_booklist		(char *);
-static void	 print_request		(struct bookrequest *);
-static int	 show_chapter		(size_t,size_t,size_t);
-static int	 sort_abrev		(const void *,const void *);
-static int	 sort_fullname		(const void *,const void *);
-static int	 sort_sounds		(const void *,const void *);
-static int	 sort_metaphone		(const void *,const void *);
-static int	 find_abrev		(const void *,const void *);
-static int	 find_fullname		(const void *,const void *);
-static int	 find_sounds		(const void *,const void *);
-static int	 find_metaphone		(const void *,const void *);
-static char	*trim_lspace		(char *);
-static char	*trim_tspace		(char *);
-static char	*trim_space		(char *);
-static char	*m_strdup		(char *);
+static void      translate_request      (struct bookrequest *,char *);
+static void      read_booklist          (char *);
+static void      print_request          (struct bookrequest *);
+static int       show_chapter           (size_t,size_t,size_t);
+static int       sort_abrev             (const void *,const void *);
+static int       sort_fullname          (const void *,const void *);
+static int       sort_sounds            (const void *,const void *);
+static int       sort_metaphone         (const void *,const void *);
+static int       find_abrev             (const void *,const void *);
+static int       find_fullname          (const void *,const void *);
+static int       find_sounds            (const void *,const void *);
+static int       find_metaphone         (const void *,const void *);
+static char     *trim_lspace            (char *);
+static char     *trim_tspace            (char *);
+static char     *trim_space             (char *);
+static char     *m_strdup               (char *);
 
-static void	 dump_list		(struct bookname **);
+static void      dump_list              (struct bookname **);
 
 /*************************************************************/
 
@@ -102,7 +102,7 @@ int main(int argc,char *argv[])
   char               buffer[BUFSIZ];
   struct bookrequest br;
   
-  if (argc < 3) 
+  if (argc < 3)
   {
     fprintf(stderr,"%s <booklist> <bookdir>\n",argv[0]);
     exit(1);
@@ -133,12 +133,12 @@ int main(int argc,char *argv[])
       printf("%s->",buffer);
     printf(
             "%s.%lu:%lu-%lu:%lu found\n",
-	    br.name,
-	    (unsigned long)br.c1,
-	    (unsigned long)br.v1,
-	    (unsigned long)br.c2,
-	    (unsigned long)br.v2
-	  );
+            br.name,
+            (unsigned long)br.c1,
+            (unsigned long)br.v1,
+            (unsigned long)br.c2,
+            (unsigned long)br.v2
+          );
     /*print_request(&br);*/
 #endif
   }
@@ -176,7 +176,7 @@ static void translate_request(struct bookrequest *pbr,char *r)
     buffer[1] = toupper(buffer[1]);
   else
     buffer[0] = toupper(buffer[0]);
-  
+    
   pres = bsearch(buffer,fullname,maxbook,sizeof(struct bookname *),find_fullname);
   if (pres == NULL)
   {
@@ -196,17 +196,17 @@ static void translate_request(struct bookrequest *pbr,char *r)
         if (rc == 0) return;
         pres = bsearch(mp,metaphone,maxbook,sizeof(struct bookname *),find_metaphone);
         if (pres == NULL) return;
-      }  
+      }
     }
   }
   
   pbr->name = (*pres)->s2;
   
-  if (*r == '\0') return;		/* 1. G or G- */
+  if (*r == '\0') return;               /* 1. G or G- */
   if (*r == '-')  return;
   
   pbr->c1 = strtoul(r+1,&r,10);
-  if (*r == '\0')			/* 2. G.a */
+  if (*r == '\0')                       /* 2. G.a */
   {
     pbr->c2 = pbr->c1;
     return;
@@ -214,16 +214,16 @@ static void translate_request(struct bookrequest *pbr,char *r)
   
   if ((*r == '.') || (*r == ':'))
   {
-    pbr->v1 = strtoul(r+1,&r,10);	/* 3. G.a.b */
-    if (*r++ != '-') 
+    pbr->v1 = strtoul(r+1,&r,10);       /* 3. G.a.b */
+    if (*r++ != '-')
     {
       pbr->c2 = pbr->c1;
       pbr->v2 = pbr->v1;
       return;
     }
-    if (!isdigit(*r)) return;		/* 4. G.a.b- */
+    if (!isdigit(*r)) return;           /* 4. G.a.b- */
     
-    pbr->c2 = strtoul(r,&r,10);		/* 5. G.a.b-x */
+    pbr->c2 = strtoul(r,&r,10);         /* 5. G.a.b-x */
     if ((*r != '.') && (*r != ':'))
     {
       pbr->v2 = pbr->c2;
@@ -231,22 +231,22 @@ static void translate_request(struct bookrequest *pbr,char *r)
       return;
     }
     
-    pbr->v2 = strtoul(r+1,&r,10);	/* 6. G.a.b-x.y */
+    pbr->v2 = strtoul(r+1,&r,10);       /* 6. G.a.b-x.y */
     return;
   }
   
-  if (*r++ != '-')			/* 2. G.a */
+  if (*r++ != '-')                      /* 2. G.a */
   {
     pbr->c2 = pbr->c1;
     return;
   }
   
-  if (!isdigit(*r)) return;		/* 7. G.a- */
-
-  pbr->c2 = strtoul(r,&r,10);		/* 8. G.a-x */
+  if (!isdigit(*r)) return;             /* 7. G.a- */
+  
+  pbr->c2 = strtoul(r,&r,10);           /* 8. G.a-x */
   if ((*r != '.') && (*r != ':')) return;
   
-  pbr->v2 = strtoul(r+1,&r,10);		/* 9. G.a-x.y */
+  pbr->v2 = strtoul(r+1,&r,10);         /* 9. G.a-x.y */
 }
 
 /********************************************************************/
@@ -266,7 +266,7 @@ static void print_request(struct bookrequest *pbr)
   }
   
   printf("\n%s\n",pbr->name);
-
+  
   if (pbr->c1 == pbr->c2)
     show_chapter(pbr->c1,pbr->v1,pbr->v2);
   else
@@ -393,7 +393,7 @@ static void read_booklist(char *fname)
       size  += BUMPSIZE;
       books  = realloc(books,size * sizeof(struct bookname));
     }
-
+    
     s1 = strtok(buffer,",");
     s2 = strtok(NULL,",\n");
     assert(s1 != NULL);
@@ -403,7 +403,7 @@ static void read_booklist(char *fname)
     s2 = trim_space(s2);
     s11 = m_strdup(s1);
     s22 = m_strdup(s2);
-        
+    
     books[maxbook].s1  = s11;
     books[maxbook].s2  = s22;
     books[maxbook].sdx = isdigit(*s22) ? Soundex(s22+1) : Soundex(s22) ;
@@ -499,7 +499,7 @@ static int find_abrev(const void *key,const void *datum)
   
   assert(pbn != NULL);
   assert(k   != NULL);
-
+  
   return(strcmp(k,pbn->s1));
 }
 
@@ -594,8 +594,8 @@ static void dump_list(struct bookname **pa)
   char buffer[BUFSIZ];
   
   assert(pa != NULL);
-
-  printf("Dump list\n");  
+  
+  printf("Dump list\n");
   for (i = 0 ; i < maxbook ; i++)
   {
     printf(
