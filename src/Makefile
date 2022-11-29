@@ -3,7 +3,7 @@
 #
 # Makefile		- Makefile for mod_litbook and misc. files
 #
-# Copyright 1999 by Sean Conner.  All Rights Reserved.
+# Copyright 2022 by Sean Conner.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,44 +23,25 @@
 #
 ########################################################################
 
-CC=cc -g -Wall -ansi -pedantic
+CC=cc -g -std=c99 -Wall -ansi -pedantic
 CFLAGS=
 AR=ar cr
 RANLIB=ranlib
+APXS=apxs
 
-libsoundex.a : soundex.o metaphone.o
-	$(AR) libsoundex.a soundex.o metaphone.o
-	$(RANLIB) libsoundex.a
+.PHONY: clean
 
-breakout : breakout.o util.o nodelist.o
-	$(CC) -o breakout breakout.o util.o nodelist.o
+mod_litbook.o : mod_litbook.c
+	$(APXS) -i -a -c mod_litbook.c soundex.c metaphone.c
 
-testmod : testmod.o soundex.o metaphone.o
-	$(CC) -o testmod testmod.o soundex.o metaphone.o
-
-all : libsoundex.a breakout testmod
+breakout    : breakout.o util.o nodelist.o
+testmod     : testmod.o soundex.o metaphone.o
+breakout.o  : breakout.c
+metaphone.o : metaphone.c metaphone.h
+nodelist.o  : nodelist.c nodelist.h
+soundex.o   : soundex.c soundex.h
+testmod.o   : testmod.c
+util.o      : util.c util.h
 
 clean : 
-	/bin/rm -rf libsoundex.a breakout testmod *.o *~
-
-#---------------------------------------------------------
-# Rules to compile individual files
-#---------------------------------------------------------
-
-breakout.o : breakout.c
-	$(CC) -c breakout.c
-
-metaphone.o : metaphone.c metaphone.h
-	$(CC) -c metaphone.c
-
-nodelist.o : nodelist.c nodelist.h
-	$(CC) -c nodelist.c
-
-soundex.o : soundex.c soundex.h
-	$(CC) -c soundex.c
-
-testmod.o : testmod.c
-	$(CC) -c testmod.c
-
-util.o : util.c util.h
-	$(CC) -c util.c
+	$(RM) libsoundex.a breakout testmod *.o *~ *.lo *.la *.slo
