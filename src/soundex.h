@@ -28,16 +28,16 @@
 
 typedef union soundex
 {
-  unsigned char cval[4];
-  unsigned long value;
+  char cval[4];
+  long value;
 } SOUNDEX;
 
 /************************************************************************/
 
-SOUNDEX          (Soundex)              (char *);
-int              (SoundexCompare)       (SOUNDEX,SOUNDEX);
-int              (SoundexEqu)           (SOUNDEX,SOUNDEX);
-char            *(SoundexString)        (char *,SOUNDEX);
+extern SOUNDEX  (Soundex)        (char const *);
+extern int      (SoundexCompare) (SOUNDEX,SOUNDEX);
+extern int      (SoundexEqu)     (SOUNDEX,SOUNDEX);
+extern char    *(SoundexString)  (char *,SOUNDEX);
 
 /*************************************************************************/
 
@@ -45,4 +45,3 @@ char            *(SoundexString)        (char *,SOUNDEX);
 #define SoundexEqu(s1,s2)       ((s1).value == (s2).value)
 
 #endif
-

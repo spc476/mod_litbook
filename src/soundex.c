@@ -24,65 +24,159 @@
 *
 ********************************************************************/
 
+#include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+
 #include "soundex.h"
 
-#ifdef DDT
-#  define D(x)  x
-#else
-#  define D(x)
-#  define NDEBUG
-#endif
-#include <assert.h>
+/*************************************************************************/
+
+static bool inset(char const *s,char const *set)
+{
+  return ((*s != '\0') && (strchr(set,toupper(*s)) != NULL));
+}
 
 /*************************************************************************/
 
-static char *ignore = "AEIOUWYH";
-static char *use[6] =
+static char const *nextchar(char const *s,char const *set)
 {
-  "BPFV",
-  "CSKGJQXZ",
-  "DT",
-  "L",
-  "MN",
-  "R"
-};
+  while(inset(s,set))
+    s++;
+  return s;
+}
 
 /*************************************************************************/
 
-SOUNDEX (Soundex)(char *word)
+static char const *ignore(char const *s)
 {
-  SOUNDEX sdx;
-  char    c;
-  char    last;
-  int     idx  = 1;
-  int     i;
+  return nextchar(s,"AEIOUWYH'");
+}
+
+/*************************************************************************/
+
+static char const *skip(char const *s)
+{
+  return nextchar(s,"HW");
+}
+
+/*************************************************************************/
+
+static bool checkset(char const **ps,char const*set,char *d,char ret)
+{
+  char const *s = *ps;
   
-  assert(word != NULL);
-  
-  sdx.cval[0] = toupper(*word++);
-  sdx.cval[1] = sdx.cval[2] = sdx.cval[3] = '0';
-  last        = sdx.cval[0];
-  
-Soundex_10:
-  c = toupper(*word++);
-  if (c == 0) goto Soundex_end;
-  if (strchr(ignore,c) != NULL) goto Soundex_10;
-  for (i = 0 ; i < 6 ; i++)
+  if (!inset(s,set))
+    return false;
+    
+  s = nextchar(s,set);
+  s = skip(s);
+  if (inset(s,set))
+    s = nextchar(s,set);
+  *ps = s;
+  *d  = ret;
+  return true;
+}
+
+/*************************************************************************/
+
+static bool cs1(char const **s,char *d)
+{
+  return checkset(s,"BFPV",d,'1');
+}
+
+/*************************************************************************/
+
+static bool cs2(char const **s,char *d)
+{
+  return checkset(s,"CGJKQSXZ",d,'2');
+}
+
+/*************************************************************************/
+
+static bool cs3(char const **s,char *d)
+{
+  return checkset(s,"DT",d,'3');
+}
+
+/*************************************************************************/
+
+static bool cs4(char const **s,char *d)
+{
+  return checkset(s,"L",d,'4');
+}
+
+/*************************************************************************/
+
+static bool cs5(char const **s,char *d)
+{
+  return checkset(s,"MN",d,'5');
+}
+
+/*************************************************************************/
+
+static bool cs6(char const **s,char *d)
+{
+  return checkset(s,"R",d,'6');
+}
+
+/*************************************************************************/
+
+static char const *use(char const *s,char *d)
+{
+  s = ignore(s);
+  if (cs1(&s,d))
+    return s;
+  else if (cs2(&s,d))
+    return s;
+  else if (cs3(&s,d))
+    return s;
+  else if (cs4(&s,d))
+    return s;
+  else if (cs5(&s,d))
+    return s;
+  else if (cs6(&s,d))
+    return s;
+  else
   {
-    if (strchr(use[i],c) != NULL)
-    {
-      if (strchr(use[i],last) != NULL) goto Soundex_10;
-      last = c;
-      sdx.cval[idx++] = '1' + i;
-      if (idx == 4) goto Soundex_end;
-    }
+    *d = '0';
+    return *s == '\0' ? s : ++s;
   }
-  goto Soundex_10;
+}
+
+/*************************************************************************/
+
+static char const *initial(char const *s,char *d)
+{
+  char dummy;
   
-Soundex_end:
-  return(sdx);
+  *d = toupper(*s);
+  if (cs1(&s,&dummy))
+    return s;
+  else if (cs2(&s,&dummy))
+    return s;
+  else if (cs3(&s,&dummy))
+    return s;
+  else if (cs4(&s,&dummy))
+    return s;
+  else if (cs5(&s,&dummy))
+    return s;
+  else if (cs6(&s,&dummy))
+    return s;
+  else
+    return ++s;
+}
+
+/*************************************************************************/
+
+SOUNDEX (Soundex)(char const *name)
+{
+  SOUNDEX code;
+  name = initial(name,&code.cval[0]);
+  name = use(name,&code.cval[1]);
+  name = use(name,&code.cval[2]);
+         use(name,&code.cval[3]);
+  return code;
 }
 
 /**********************************************************************/
@@ -112,4 +206,3 @@ char *(SoundexString)(char *dest,SOUNDEX sdx)
 }
 
 /************************************************************************/
-
