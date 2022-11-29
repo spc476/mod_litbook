@@ -4,7 +4,7 @@
 * soundex.c             - Library routines to implement the Soundex
 *                         algorithm.
 *
-* Copyright 1999 by Sean Conner.  All Rights Reserved.
+* Copyright 2022 by Sean Conner.  All Rights Reserved.
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
