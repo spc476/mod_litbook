@@ -217,6 +217,7 @@ struct bookrequest
 struct litconfig
 {
   char             *bookindex;
+  char             *booktrans;
   char             *bookdir;
   char             *booktld;
   char             *booktitle;
@@ -346,8 +347,9 @@ static void *create_dir_config(apr_pool_t *p,char *dirspec)
     
   plc            = apr_palloc(p,sizeof(struct litconfig));
   plc->bookindex = NULL;
+  plc->booktrans = NULL;
   plc->bookdir   = NULL;
-  plc->booktld   = NULL;
+  plc->booktld   = apr_pstrdup(p,dirspec);
   plc->booktitle = NULL;
   plc->books     = NULL;
   plc->abrev     = NULL;
@@ -367,6 +369,7 @@ static void *merge_dir_config(apr_pool_t *p,void *base,void *add)
   struct litconfig *plc  = create_dir_config(p,"(merged)");
   
   plc->bookindex = plca->bookindex != NULL ? plca->bookindex : plcb->bookindex;
+  plc->booktrans = plca->booktrans != NULL ? plca->booktrans : plcb->booktrans;
   plc->bookdir   = plca->bookdir   != NULL ? plca->bookdir   : plcb->bookdir;
   plc->booktld   = plca->booktld   != NULL ? plca->booktld   : plcb->booktld;
   plc->booktitle = plca->booktitle != NULL ? plca->booktitle : plcb->booktitle;
@@ -416,7 +419,7 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char const *
     
   clt_linecount(fp,&plc->maxbook,&lsize); /* because we can't realloc */
   buffer         = apr_palloc(cmd->pool,lsize + 1); /* ptrans is static ! */
-  plc->booktld   = apr_pstrdup(cmd->pool,arg);
+  plc->booktrans = apr_pstrdup(cmd->pool,arg);
   plc->books     = apr_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname));
   plc->abrev     = apr_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
   plc->fullname  = apr_palloc(cmd->pool,plc->maxbook * sizeof(struct bookname *));
@@ -644,7 +647,7 @@ static int handle_request(request_rec *r)
   {
     char tportnum[MBUFSIZ];
     
-    if (r->server->port != 80)
+    if ((r->server->port != 80) && (r->server->port != 0))
       sprintf(tportnum,":%u",r->server->port);
     else
       tportnum[0] = '\0';
