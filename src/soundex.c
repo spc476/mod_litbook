@@ -181,26 +181,9 @@ SOUNDEX (Soundex)(char const *name)
 
 /**********************************************************************/
 
-int (SoundexCompare)(SOUNDEX s1,SOUNDEX s2)
-{
-  return(s1.value - s2.value);
-}
-
-/***********************************************************************/
-
-int (SoundexEqu)(SOUNDEX s1,SOUNDEX s2)
-{
-  return(s1.value == s2.value);
-}
-
-/***********************************************************************/
-
 char *(SoundexString)(char *dest,SOUNDEX sdx)
 {
-  dest[0] = sdx.cval[0];
-  dest[1] = sdx.cval[1];
-  dest[2] = sdx.cval[2];
-  dest[3] = sdx.cval[3];
+  memcpy(dest,sdx.cval,sizeof(sdx.cval));
   dest[4] = '\0';
   return(dest);
 }

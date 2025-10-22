@@ -34,14 +34,19 @@ typedef union soundex
 
 /************************************************************************/
 
-extern SOUNDEX  (Soundex)        (char const *);
-extern int      (SoundexCompare) (SOUNDEX,SOUNDEX);
-extern int      (SoundexEqu)     (SOUNDEX,SOUNDEX);
-extern char    *(SoundexString)  (char *,SOUNDEX);
+extern SOUNDEX  Soundex      (char const *);
+extern char    *SoundexString(char *,SOUNDEX);
 
 /*************************************************************************/
 
-#define SoundexCompare(s1,s2)   ((s1).value - (s2).value)
-#define SoundexEqu(s1,s2)       ((s1).value == (s2).value)
+static inline long int SoundexCompare(SOUNDEX s1,SOUNDEX s2)
+{
+  return s1.value - s2.value;
+}
+
+static inline int SoundexEqu(SOUNDEX s1,SOUNDEX s2)
+{
+  return s1.value == s2.value;
+}
 
 #endif
