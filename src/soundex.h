@@ -29,7 +29,7 @@
 typedef union soundex
 {
   char cval[4];
-  long value;
+  int  value; /* assumes sizeof(int) == 4 */
 } SOUNDEX;
 
 /************************************************************************/
@@ -39,7 +39,7 @@ extern char    *SoundexString(char *,SOUNDEX);
 
 /*************************************************************************/
 
-static inline long int SoundexCompare(SOUNDEX s1,SOUNDEX s2)
+static inline int SoundexCompare(SOUNDEX s1,SOUNDEX s2)
 {
   return s1.value - s2.value;
 }

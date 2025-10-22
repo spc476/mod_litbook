@@ -90,7 +90,7 @@ static char *trim_lspace(char *s)
 {
   for ( ; (*s) && (isspace(*s)) ; s++)
     ;
-  return(s);
+  return s;
 }
 
 /********************************************************************/
@@ -102,14 +102,14 @@ static char *trim_tspace(char *s)
   for (p = s + strlen(s) - 1 ; (p > s) && (isspace(*p)) ; p--)
     ;
   p[1] = '\0';
-  return(s);
+  return s;
 }
 
 /********************************************************************/
 
 static char *trim_space(char *s)
 {
-  return(trim_tspace(trim_lspace(s)));
+  return trim_tspace(trim_lspace(s));
 }
 
 /********************************************************************/
@@ -118,9 +118,9 @@ static int empty_string(char *s)
 {
   for ( ; *s ; s++)
   {
-    if (isprint(*s)) return(0);
+    if (isprint(*s)) return 0;
   }
-  return(1);
+  return 1;
 }
 
 /******************************************************************
@@ -167,48 +167,40 @@ static void clt_linecount(apr_file_t *fp,size_t *pcount,size_t *plsize)
 
 static int clt_sort_abrev(const void *o1,const void *o2)
 {
-  return(
-          strcmp(
-                  (*((struct bookname **)o1))->abrev,
-                  (*((struct bookname **)o2))->abrev
-                )
-        );
+  return strcmp(
+                 (*((struct bookname **)o1))->abrev,
+                 (*((struct bookname **)o2))->abrev
+               );
 }
 
 /*******************************************************************/
 
 static int clt_sort_fullname(const void *o1,const void *o2)
 {
-  return(
-          strcmp(
-                  (*((struct bookname **)o1))->fullname,
-                  (*((struct bookname **)o2))->fullname
-                )
-        );
+  return strcmp(
+                 (*((struct bookname **)o1))->fullname,
+                 (*((struct bookname **)o2))->fullname
+               );
 }
 
 /*********************************************************************/
 
 static int clt_sort_soundex(const void *o1,const void *o2)
 {
-  return(
-          SoundexCompare(
-                          (*((struct bookname **)o1))->sdx,
-                          (*((struct bookname **)o2))->sdx
-                        )
-        );
+  return SoundexCompare(
+                         (*((struct bookname **)o1))->sdx,
+                         (*((struct bookname **)o2))->sdx
+                       );
 }
 
 /********************************************************************/
 
 static int clt_sort_metaphone(const void *o1,const void *o2)
 {
-  return(
-          strcmp(
-                  (*((struct bookname **)o1))->mp,
-                  (*((struct bookname **)o2))->mp
-                )
-        );
+  return strcmp(
+                 (*((struct bookname **)o1))->mp,
+                 (*((struct bookname **)o2))->mp
+               );
 }
 
 /*******************************************************************
@@ -217,28 +209,28 @@ static int clt_sort_metaphone(const void *o1,const void *o2)
 
 static int hr_find_abrev(const void *key,const void *datum)
 {
-  return(strcmp(key,(*((struct bookname **)datum))->abrev));
+  return strcmp(key,(*((struct bookname **)datum))->abrev);
 }
 
 /**********************************************************************/
 
 static int hr_find_fullname(const void *key,const void *datum)
 {
-  return(strcmp(key,(*((struct bookname **)datum))->fullname));
+  return strcmp(key,(*((struct bookname **)datum))->fullname);
 }
 
 /*********************************************************************/
 
 static int hr_find_soundex(const void *key,const void *datum)
 {
-  return(SoundexCompare(*((SOUNDEX *)key),(*((struct bookname **)datum))->sdx));
+  return SoundexCompare(*((SOUNDEX *)key),(*((struct bookname **)datum))->sdx);
 }
 
 /**********************************************************************/
 
 static int hr_find_metaphone(const void *key,const void *datum)
 {
-  return(strcmp(key,(*((struct bookname **)datum))->mp));
+  return strcmp(key,(*((struct bookname **)datum))->mp);
 }
 
 /******************************************************************/
@@ -270,13 +262,13 @@ static int hr_show_chapter(
   if (max < 1)
   {
     apr_file_close(fp);
-    return(1);
+    return 1;
   }
   
   if (vlow > max)
   {
     apr_file_close(fp);
-    return(1);
+    return 1;
   }
   
   if (vhigh > max) vhigh = max;
@@ -285,7 +277,7 @@ static int hr_show_chapter(
   if (iarray == NULL)
   {
     apr_file_close(fp);
-    return(1);
+    return 1;
   }
   
   apr_file_read(fp,iarray,&(size_t){sizeof(long) * (max + 1)});
@@ -318,7 +310,7 @@ static int hr_show_chapter(
       if (p == NULL)
       {
         apr_file_close(fp);
-        return(0);
+        return 0;
       }
       maxs = s;
     }
@@ -332,7 +324,7 @@ static int hr_show_chapter(
   }
   
   apr_file_close(fp);
-  return(0);
+  return 0;
 }
 
 /**********************************************************************/
@@ -410,7 +402,7 @@ static void hr_translate_request(
   ;       if not found abrev
   ;         if not found soundex
   ;           if not found metaphone
-  ;             return(NOT FOUND);
+  ;             return NOT FOUND;
   ;---------------------------------------------------------*/
   
   pres = bsearch(
@@ -582,12 +574,12 @@ static char *hr_redirect_request(struct bookrequest *pbr,apr_pool_t *p)
   if ((pbr->c2 == INT_MAX) && (pbr->v2 == INT_MAX))
   {
     if ((pbr->c1 == 1) && (pbr->v1 == 1))
-      return(apr_pstrdup(p,pbr->name));
+      return apr_pstrdup(p,pbr->name);
       
     if ((pbr->c1 != 1) && (pbr->v2 == 1))
-      return(apr_pstrcat(p,pbr->name,".",tc1,"-",NULL));
+      return apr_pstrcat(p,pbr->name,".",tc1,"-",NULL);
       
-    return(apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",NULL));
+    return apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",NULL);
   }
   
   if (pbr->c1 == pbr->c2)
@@ -599,23 +591,23 @@ static char *hr_redirect_request(struct bookrequest *pbr,apr_pool_t *p)
     ;--------------------------------------------------------------*/
     
     if ((pbr->v1 == 1) && (pbr->v2 == INT_MAX))
-      return(apr_pstrcat(p,pbr->name,".",tc1,NULL));
+      return apr_pstrcat(p,pbr->name,".",tc1,NULL);
       
     if (pbr->v1 == pbr->v2)
-      return(apr_pstrcat(p,pbr->name,".",tc1,":",tv1,NULL));
+      return apr_pstrcat(p,pbr->name,".",tc1,":",tv1,NULL);
       
-    return(apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc2,":",tv2,NULL));
+    return apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc2,":",tv2,NULL);
   }
   
   if (pbr->v1 == 1)
   {
     if (pbr->v2 == INT_MAX)
-      return(apr_pstrcat(p,pbr->name,".",tc1,"-",tc2,NULL));
+      return apr_pstrcat(p,pbr->name,".",tc1,"-",tc2,NULL);
     else
-      return(apr_pstrcat(p,pbr->name,".",tc1,"-",tc2,":",tv2,NULL));
+      return apr_pstrcat(p,pbr->name,".",tc1,"-",tc2,":",tv2,NULL);
   }
   
-  return(apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc1,":",tv2,NULL));
+  return apr_pstrcat(p,pbr->name,".",tc1,":",tv1,"-",tc1,":",tv2,NULL);
 }
 
 /*********************************************************************/
@@ -713,7 +705,7 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char const *
 static const char *config_litbookindex(cmd_parms *cmd,void *mconfig,char const *arg)
 {
   ((struct litconfig *)mconfig)->bookindex = apr_pstrdup(cmd->pool,arg);
-  return(NULL);
+  return NULL;
 }
 
 /*******************************************************************/
@@ -721,7 +713,7 @@ static const char *config_litbookindex(cmd_parms *cmd,void *mconfig,char const *
 static const char *config_litbooktitle(cmd_parms *cmd,void *mconfig,char const *arg)
 {
   ((struct litconfig *)mconfig)->booktitle = apr_pstrdup(cmd->pool,arg);
-  return(NULL);
+  return NULL;
 }
 
 /*****************************************************************
@@ -790,7 +782,7 @@ static int handle_request(request_rec *r)
   ;--------------------------------------------------------------*/
   
   hr_translate_request(&br,plc,&r->path_info[1]);
-  if (br.name == NULL) return(HTTP_NOT_FOUND);
+  if (br.name == NULL) return HTTP_NOT_FOUND;
   if (br.redirect)
   {
     char tportnum[MBUFSIZ];
@@ -812,7 +804,7 @@ static int handle_request(request_rec *r)
                                  hr_redirect_request(&br,r->pool)
                                )
                  );
-    return(HTTP_MOVED_PERMANENTLY);
+    return HTTP_MOVED_PERMANENTLY;
   }
   
   /*-------------------------------------------------------------
@@ -849,7 +841,7 @@ static int handle_request(request_rec *r)
             "\n",
             r
           );
-  return(OK);
+  return OK;
 }
 
 /***********************************************************************
@@ -877,7 +869,7 @@ static void *create_dir_config(apr_pool_t *p,char *dirspec)
   plc->soundex   = NULL;
   plc->metaphone = NULL;
   plc->maxbook   = 0;
-  return(plc);
+  return plc;
 }
 
 /*********************************************************************/
