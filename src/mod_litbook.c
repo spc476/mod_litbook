@@ -675,13 +675,11 @@ static const char *config_litbooktrans(cmd_parms *cmd,void *mconfig,char const *
     fulln = apr_pstrdup(cmd->pool,trim_space(fulln));
     rc    = make_metaphone(fulln,mp,sizeof(mp));
     
-    plc->books[i].abrev = abrev;
+    plc->books[i].abrev    = abrev;
     plc->books[i].fullname = fulln;
     plc->books[i].sdx      = isdigit(*fulln) ? Soundex(fulln+1) : Soundex(fulln);
     plc->books[i].mp       = apr_pstrdup(cmd->pool,mp);
-    
-    plc->abrev[i] = plc->fullname [i] = plc->soundex[i]
-                  = plc->metaphone[i] = &plc->books [i];
+    plc->abrev[i]          = plc->fullname [i] = plc->soundex[i] = plc->metaphone[i] = &plc->books [i];
   }
   
   apr_file_close(fp);
