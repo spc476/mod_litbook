@@ -23,10 +23,6 @@
 #
 ########################################################################
 
-CC=cc -g -std=c99 -Wall -ansi -pedantic
-CFLAGS=
-AR=ar cr
-RANLIB=ranlib
 APXS=apxs
 
 .PHONY: clean
@@ -44,4 +40,4 @@ testmod.o   : testmod.c
 util.o      : util.c util.h
 
 clean : 
-	$(RM) libsoundex.a breakout testmod *.o *~ *.lo *.la *.slo
+	$(RM) -r .libs libsoundex.a breakout testmod *.o *~ *.lo *.la *.slo
