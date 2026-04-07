@@ -248,10 +248,9 @@ static int hr_show_chapter(
   apr_file_t   *fp;
   char          fname[MBUFSIZ];
   size_t        max;
-  long          i;
   long          s;
   long          maxs = 0;
-  char         *p;
+  char         *p    = NULL;
   apr_status_t  rc;
   
   sprintf(fname,"%s/%s/%lu.index",plc->bookdir,name,(unsigned long)chapter);
@@ -291,7 +290,7 @@ static int hr_show_chapter(
   if (vlow > 1)
     ap_rprintf(r,"<p class=\"skip\">.<br>.<br>.</p>\n");
     
-  for (i = vlow ; i <= vhigh ; i++)
+  for (size_t i = vlow ; i <= vhigh ; i++)
   {
     s = iarray[i] - iarray[i-1];
     
@@ -335,16 +334,13 @@ static void hr_print_request(
                               request_rec        *r
                             )
 {
-  int    rc;
-  size_t i;
-  
   ap_rprintf(r,"<h1>%s</h1>\n",pbr->name);
   
   if (pbr->c1 == pbr->c2)
     hr_show_chapter(pbr->c1,pbr->v1,pbr->v2,plc,pbr->name,r);
   else
   {
-    for (i = pbr->c1 ; i <= pbr->c2 ; i++)
+    for (size_t i = pbr->c1 ; i <= pbr->c2 ; i++)
     {
       if (i == pbr->c1)
       {
@@ -898,7 +894,7 @@ static void modlitbook_hooks(apr_pool_t *p)
 {
   (void)p;
   ap_hook_handler(handle_request,NULL,NULL,APR_HOOK_MIDDLE);
-};
+}
 
 /******************************************************************/
 
@@ -908,7 +904,7 @@ static command_rec const modlitbook_cmds[] =
   AP_INIT_TAKE1("LitbookTranslation", config_litbooktrans, NULL, ACCESS_CONF | OR_OPTIONS, "Specifies the location of book/chapter titles and abbreviations"),
   AP_INIT_TAKE1("LitbookIndex",       config_litbookindex, NULL, ACCESS_CONF | OR_OPTIONS, "The URL for the main indexpage for this book"),
   AP_INIT_TAKE1("LitbookTitle",       config_litbooktitle, NULL, ACCESS_CONF | OR_OPTIONS, "Set the title of pages output by this module"),
-  { NULL }
+  { .name = NULL }
 };
 
 /******************************************************************/
@@ -922,6 +918,7 @@ module AP_MODULE_DECLARE_DATA litbook_module =
   NULL,
   modlitbook_cmds,
   modlitbook_hooks,
+  0
 };
 
 /******************************************************************/

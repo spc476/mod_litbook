@@ -298,8 +298,8 @@ static int show_chapter(size_t chapter,size_t vlow,size_t vhigh)
   long int *iarray;
   FILE     *fp;
   char      fname[BUFSIZ];
-  long      max;
-  long      i;
+  size_t    max;
+//  long      i;
   long      s;
   char     *p;
   
@@ -343,7 +343,7 @@ static int show_chapter(size_t chapter,size_t vlow,size_t vhigh)
   if (vlow > 1)
     printf("\t.\n\t.\n\t.\n");
     
-  for (i = vlow ; i <= vhigh ; i++)
+  for (size_t i = vlow ; i <= vhigh ; i++)
   {
     s = iarray[i] - iarray[i-1];
     p = malloc(s);
@@ -373,7 +373,6 @@ static void read_booklist(char *fname)
   size_t  size = 0;
   FILE   *fp;
   char    buffer[BUFSIZ];
-  int     i;
   
   assert(fname != NULL);
   
@@ -417,7 +416,7 @@ static void read_booklist(char *fname)
   sounds    = malloc(maxbook * sizeof(struct bookname *));
   metaphone = malloc(maxbook * sizeof(struct bookname *));
   
-  for (i = 0 ; i < maxbook ; i++)
+  for (size_t i = 0 ; i < maxbook ; i++)
     abrev[i] = fullname[i] = sounds[i] = metaphone[i] = &books[i];
     
   qsort(abrev,    maxbook,sizeof(struct bookname *),sort_abrev);
@@ -590,13 +589,12 @@ static char *m_strdup(char *s)
 
 static void dump_list(struct bookname **pa)
 {
-  int  i;
   char buffer[BUFSIZ];
   
   assert(pa != NULL);
   
   printf("Dump list\n");
-  for (i = 0 ; i < maxbook ; i++)
+  for (size_t i = 0 ; i < maxbook ; i++)
   {
     printf(
             "\t%s\t, %s(%s)[%s]\n",
